@@ -1,4 +1,136 @@
-.Rproj.user
+# =============================================================================
+# .gitignore for grave_d_data2026
+# R / RStudio / Quarto data pipeline project
+# GRAVE-D Master Dyadic Dataset Builder
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# DATA — never commit raw source data or derived output
+# -----------------------------------------------------------------------------
+source_data/
+output/
+*.csv
+*.dta
+*.sav
+*.xlsx
+*.xls
+*.rds
+*.RData
+*.feather
+*.parquet
+
+# Exceptions: keep placeholder/gitkeep files so folders exist in repo
+!source_data/.gitkeep
+!source_data/fbic/.gitkeep
+!source_data/mids/.gitkeep
+!source_data/vdem/.gitkeep
+!source_data/cow/.gitkeep
+!source_data/grave_d/.gitkeep
+!source_data/wdi/.gitkeep
+!output/.gitkeep
+
+# -----------------------------------------------------------------------------
+# R-specific
+# -----------------------------------------------------------------------------
 .Rhistory
 .RData
-.Ruserdata
+.Rapp.history
+.Rproj.user/
+*.Rproj.user
+
+# R package library (if using renv)
+renv/library/
+renv/.cache/
+packrat/lib/
+packrat/lib-ext/
+packrat/lib-R/
+packrat/src/
+
+# R check output
+*.Rcheck/
+
+# knitr / rmarkdown caches
+*_cache/
+/cache/
+*.knit.md
+*.utf8.md
+
+# -----------------------------------------------------------------------------
+# Quarto output
+# -----------------------------------------------------------------------------
+_site/
+_book/
+docs/_site/
+docs/_book/
+/.quarto/
+docs/.quarto/
+*.html
+!docs/*.html
+
+# Pandoc intermediates
+*.tex
+*.log
+*.aux
+*.out
+*.toc
+*.lof
+*.lot
+*.blg
+*.bbl
+
+# PDF output (generated; not source)
+*.pdf
+
+# -----------------------------------------------------------------------------
+# RStudio
+# -----------------------------------------------------------------------------
+.Rproj.user
+*.Rproj.user/
+.rstudio/
+
+# -----------------------------------------------------------------------------
+# OS-generated files
+# -----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# -----------------------------------------------------------------------------
+# Editor / IDE artifacts
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -----------------------------------------------------------------------------
+# Environment / secrets
+# -----------------------------------------------------------------------------
+.env
+.Renviron
+secrets/
+*.key
+*.pem
+
+# -----------------------------------------------------------------------------
+# Temp / scratch files
+# -----------------------------------------------------------------------------
+temp_check.txt
+*_gem.R
+junk_code.qmd
+old_code_chunks/
+scratch/
