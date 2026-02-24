@@ -206,7 +206,7 @@ grave_d    <- grave_d |> select(all_of(c(front_cols, rest_cols)))
 dir.create(here("output"), showWarnings = FALSE, recursive = TRUE)
 
 saveRDS(grave_d, here("output", "GRAVE_D_Master.rds"))
-readr::write_csv(grave_d, here("output", "GRAVE_D_Master.csv"))
+data.table::fwrite(grave_d, here("output", "GRAVE_D_Master.csv"), na = "NA")
 
 message(
   "[05_build_master.R] Done. GRAVE_D_Master saved: ",
