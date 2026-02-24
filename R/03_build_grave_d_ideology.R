@@ -123,8 +123,32 @@ if (length(missing_cols) > 0) {
   )
 }
 
-grave_clean <- grave_raw |>
-  select(all_of(present_cols)) |>
+grave_clean_temp <- grave_raw |>
+  select(all_of(present_cols))
+
+# Check for duplicates that are NOT identical
+duplicates_check <- grave_clean_temp |>
+  group_by(COWcode, year) |>
+  filter(n() > 1)
+
+if (nrow(duplicates_check) > 0) {
+  # Check if they are truly different
+  non_identical <- duplicates_check |>
+    distinct() |>
+    group_by(COWcode, year) |>
+    filter(n() > 1)
+
+  if (nrow(non_identical) > 0) {
+    stop(sprintf(
+      "[03] Error: Found %d conflicting duplicates in GRAVE-D data for the same country-year (e.g. COWcode %s, year %s)!",
+      nrow(non_identical), non_identical$COWcode[1], non_identical$year[1]
+    ))
+  }
+
+  message(sprintf("[03] Note: Dropping %d identical duplicate rows", nrow(duplicates_check) - nrow(distinct(duplicates_check))))
+}
+
+grave_clean <- grave_clean_temp |>
   distinct(COWcode, year, .keep_all = TRUE)
 
 message(sprintf("[03] GRAVE-D clean: %d country-year rows", nrow(grave_clean)))
