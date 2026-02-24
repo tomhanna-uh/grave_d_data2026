@@ -13,6 +13,52 @@
 #   output/GRAVE_D_Master.csv   -- CSV copy for sharing
 # -------------------------------------------------------------------------
 
+# 05_build_master.R
+# ------------------
+# Purpose:
+#   Build the final dyadic GRAVE-D master dataset by merging the
+#   intermediate spine, conflict, ideology, and controls objects, and
+#   export both an internal R object and CSV files for external use.
+#
+# Inputs (from data/):
+#   - data/spine.rds
+#       Dyad-year FBIC-based spine with COW codes and basic structure.
+#   - data/spine_conflict.rds
+#       Spine plus MID-based conflict variables.
+#   - data/spine_ideology.rds
+#       Spine plus leader- and ideology-related variables
+#       (Archigos, Colgan leaders, global leader ideology).
+#   - data/spine_controls.rds
+#       Spine plus alliance, economic, capability, and other controls.
+#
+# Outputs:
+#   - data/GRAVE_D_Master.rds
+#       Full merged GRAVE-D dyadic dataset as an R object for internal use.
+#   - ready_data/GRAVE_D_Master.csv
+#       Core GRAVE-D dyadic dataset for external/consumer repos.
+#   - ready_data/GRAVE_D_Master_with_Leaders.csv (optional)
+#       GRAVE-D dyadic dataset with expanded leader-level attributes,
+#       if exported here rather than in a follow-on script.
+#
+# Directory documentation:
+#   - See data/README.md for details on intermediate .rds objects
+#     consumed by this script.
+#   - See ready_data/README.md for details on the exported .csv files
+#     and how they are intended to be used.
+#
+# Consuming repositories:
+#   - data-2025
+#       Treats ready_data/GRAVE_D_Master*.csv as the canonical dyadic
+#       GRAVE-D input for further cleaning and analysis.
+#   - autocracy_conflict_signaling
+#       Uses the same GRAVE-D export as the main analysis dataset for
+#       modeling and Quarto documents.
+#
+# Usage:
+#   - Run this script after 00_packages.R and 01–04_* scripts have
+#     successfully produced all required .rds intermediates in data/.
+
+
 source(here::here("R", "00_packages.R"))
 message("[05_build_master.R] Assembling GRAVE-D master dataset...")
 
