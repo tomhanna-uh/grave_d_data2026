@@ -159,13 +159,23 @@ if (!"unregiona" %in% names(grave_d) && "COWcode_a" %in% names(grave_d)) {
   )
   # Simplified: attach via countrycode if available
   if (requireNamespace("countrycode", quietly = TRUE)) {
-    grave_d <- grave_d |>
-      mutate(
-        unregiona = countrycode::countrycode(COWcode_a, "cown", "un.region.name",
-                                             warn = FALSE),
-        unregionb = countrycode::countrycode(COWcode_b, "cown", "un.region.name",
-                                             warn = FALSE)
-      )
+    # OPTIMIZATION: Create lookup table for unique codes to avoid repeated expensive calls
+    all_codes <- unique(c(grave_d$COWcode_a, grave_d$COWcode_b))
+    all_codes <- all_codes[!is.na(all_codes)]
+
+    if (length(all_codes) > 0) {
+      regions <- countrycode::countrycode(all_codes, "cown", "un.region.name", warn = FALSE)
+      names(regions) <- as.character(all_codes)
+
+      grave_d <- grave_d |>
+        mutate(
+          unregiona = regions[as.character(COWcode_a)],
+          unregionb = regions[as.character(COWcode_b)]
+        )
+    } else {
+      grave_d <- grave_d |>
+        mutate(unregiona = NA_character_, unregionb = NA_character_)
+    }
     message("  Added unregiona/unregionb via countrycode package.")
   }
 }
