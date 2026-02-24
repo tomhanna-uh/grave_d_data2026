@@ -134,7 +134,7 @@ message(sprintf("[03] GRAVE-D clean: %d country-year rows", nrow(grave_clean)))
 # -----------------------------------------------------------------------------
 spine_ideology <- spine |>
   left_join(
-    grave_clean |> rename_with(~ paste0("sidea_", .), .cols = -c(COWcode, year)) |>
+    grave_clean |>
       # If columns already have sidea_ prefix, avoid double-prefixing
       rename(COWcode_a = COWcode),
     by = c("COWcode_a", "year")
