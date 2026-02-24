@@ -13,6 +13,7 @@
 # =============================================================================
 
 source(here::here("R", "00_packages.R"))
+library(data.table)
 
 message("[02_build_conflict.R] Starting MIDs conflict merge...")
 
@@ -121,16 +122,21 @@ message(sprintf(
 # 5. Left-join MIDs onto spine
 # All spine rows are retained; non-conflict years get hihosta=0, mid_initiated=0
 # -----------------------------------------------------------------------------
-spine_conflict <- spine |>
-  left_join(
-    mids_dyadic,
-    by = c("COWcode_a", "COWcode_b", "year")
-  ) |>
-  mutate(
-    # Rows with no MID get coded as 0 (no conflict)
-    hihosta      = if_else(is.na(hihosta), 0L, hihosta),
-    mid_initiated = if_else(is.na(mid_initiated), 0L, mid_initiated)
-  )
+# Convert to data.table for performance optimization
+setDT(spine)
+setDT(mids_dyadic)
+
+spine_conflict <- merge(
+  spine,
+  mids_dyadic,
+  by = c("COWcode_a", "COWcode_b", "year"),
+  all.x = TRUE,
+  sort = FALSE
+)
+
+# Rows with no MID get coded as 0 (no conflict)
+spine_conflict[is.na(hihosta), hihosta := 0L]
+spine_conflict[is.na(mid_initiated), mid_initiated := 0L]
 
 message(sprintf(
   "[02] After merge: %d rows | %d MID-initiated dyad-years (%.2f%%)",
