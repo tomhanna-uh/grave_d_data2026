@@ -27,10 +27,13 @@ library(stringr)     # String manipulation (part of tidyverse, explicit load)
 # --- Progress reporting ---
 library(cli)         # Progress bars and CLI messaging
 
+# --- Testing ---
+library(testthat)    # Unit testing
+
 message("[00_packages.R] All packages loaded.")
 
 # Install any missing packages:
 # pak::pkg_install(c(
 #   "here", "tidyverse", "data.table", "haven", "readxl",
-#   "countrycode", "lubridate", "stringr", "cli"
+#   "countrycode", "lubridate", "stringr", "cli", "testthat"
 # ))
