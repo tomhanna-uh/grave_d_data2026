@@ -63,6 +63,14 @@ if (length(grave_files) == 0) {
   )
 }
 
+if (length(grave_files) > 1) {
+  stop(
+    "[03] Multiple GRAVE-D source files found in source_data/grave_d/: ",
+    paste(basename(grave_files), collapse = ", "),
+    "\n  Please ensure only one coding file is present to avoid ambiguity."
+  )
+}
+
 message(sprintf("[03] Found GRAVE-D file: %s", grave_files[1]))
 
 if (grepl("\\.csv$", grave_files[1])) {
