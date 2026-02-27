@@ -151,10 +151,7 @@ spine <- fbic_filtered |>
   filter(COWcode_a != COWcode_b) |>
   # Create unique dyad identifier
   mutate(
-    dyad = paste0(
-      sprintf("%03d", COWcode_a), "_",
-      sprintf("%03d", COWcode_b)
-    )
+    dyad = sprintf("%03d_%03d", COWcode_a, COWcode_b)
   ) |>
   arrange(COWcode_a, COWcode_b, year)
 
