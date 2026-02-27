@@ -11,10 +11,35 @@ spine <- readRDS(here("output", "spine_ideology.rds"))
 # 1. V-Dem
 # -----------------------------------------------------------------------------
 vdem_path <- here("source_data", "vdem", "V-Dem-CY-Full+Others-v13.rds")
-if (file.exists(vdem_path)) {
-  vdem_data <- readRDS(vdem_path) |>
+vdem_cache_path <- here("output", "vdem_controls_subset.rds")
+
+# Check if cache exists and is newer than source
+cache_valid <- file.exists(vdem_cache_path) &&
+               file.exists(vdem_path) &&
+               (file.mtime(vdem_cache_path) > file.mtime(vdem_path))
+
+# If source is missing but cache exists, we can still use cache (edge case)
+if (!file.exists(vdem_path) && file.exists(vdem_cache_path)) {
+  cache_valid <- TRUE
+}
+
+if (cache_valid) {
+  message("[04] Loading cached V-Dem subset...")
+  vdem_data <- readRDS(vdem_cache_path)
+} else if (file.exists(vdem_path)) {
+  message("[04] Loading full V-Dem dataset and creating cache...")
+  vdem_full <- readRDS(vdem_path)
+
+  vdem_data <- vdem_full |>
     select(COWcode = country_id, year, v2x_libdem, v2exl_legitideol, v2exl_legitperf, v2exl_legitlead, v2x_corr)
-} else { vdem_data <- NULL }
+
+  # Ensure output directory exists before saving
+  dir.create(dirname(vdem_cache_path), showWarnings = FALSE, recursive = TRUE)
+  saveRDS(vdem_data, vdem_cache_path)
+  rm(vdem_full)
+} else {
+  vdem_data <- NULL
+}
 
 # -----------------------------------------------------------------------------
 # 2. COW CINC (National Military Capabilities)
