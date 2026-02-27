@@ -13,6 +13,7 @@
 # =============================================================================
 
 source(here::here("R", "00_packages.R"))
+source(here::here("R", "utils_conflict.R"))
 
 message("[02_build_conflict.R] Starting MIDs conflict merge...")
 
@@ -98,18 +99,7 @@ if (!"hihosta" %in% names(mids_raw)) {
 # 4. Build dyadic MID conflict indicators
 # Keep one row per dyad-year: max hihosta if multiple MIDs in same year
 # -----------------------------------------------------------------------------
-mids_dyadic <- mids_raw |>
-  filter(!is.na(COWcode_a), !is.na(COWcode_b)) |>
-  select(COWcode_a, COWcode_b, year, hihosta) |>
-  group_by(COWcode_a, COWcode_b, year) |>
-  summarise(
-    hihosta = max(hihosta, na.rm = TRUE),
-    .groups = "drop"
-  ) |>
-  mutate(
-    hihosta = as.integer(hihosta),
-    mid_initiated = as.integer(hihosta >= 2L)
-  )
+mids_dyadic <- aggregate_mids_dyadic(mids_raw)
 
 message(sprintf(
   "[02] MIDs prepared: %d dyad-year rows, %d MID-initiated obs",
