@@ -13,6 +13,7 @@
 # =============================================================================
 
 source(here::here("R", "00_packages.R"))
+source(here::here("R", "utils_conflict.R"))
 
 message("[02_build_conflict.R] Starting MIDs conflict merge...")
 
@@ -143,18 +144,7 @@ message(sprintf(
 # 6. Add peace years variables
 # -----------------------------------------------------------------------------
 spine_conflict <- spine_conflict |>
-  arrange(dyad, year) |>
-  group_by(dyad) |>
-  mutate(
-    conflict_year  = if_else(mid_initiated == 1L, year, NA_integer_),
-    last_conflict  = cummax(if_else(is.na(conflict_year), 0L, conflict_year)),
-    peace_years    = if_else(last_conflict == 0L, 35L, year - last_conflict),
-    t  = peace_years,
-    t2 = t^2,
-    t3 = t^3
-  ) |>
-  ungroup() |>
-  select(-conflict_year, -last_conflict)
+  calculate_peace_years()
 
 # -----------------------------------------------------------------------------
 # 7. Save
