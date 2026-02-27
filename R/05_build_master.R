@@ -138,40 +138,7 @@ grave_d <- grave_d |>
   )
 
 # -------------------------------------------------------------------------
-# 5. ADD UN GEOGRAPHIC REGION LABELS (if not already present)
-# -------------------------------------------------------------------------
-
-if (!"unregiona" %in% names(grave_d) && "COWcode_a" %in% names(grave_d)) {
-  un_region_map <- data.frame(
-    COWcode = c(
-      2, 20, 40, 41, 42, 51, 52, 53, 54, 55, 56, 57, 58, 60, 70, 80, 90, 91, 92, 93, 94, 95, 100, 101,
-      110, 115, 130, 135, 140, 145, 150, 155, 160, 165, 200, 205, 210, 211, 212, 220, 225, 230, 235,
-      240, 245, 255, 260, 265, 267, 269, 270, 275, 290, 300, 305, 310, 315, 316, 317, 325, 327, 338,
-      339, 345, 346, 347, 349, 350, 352, 355, 359, 360, 365, 366, 367, 368, 369, 370, 371, 372, 373,
-      375, 380, 385, 390, 395, 402, 404, 411, 420, 432, 433, 434, 435, 436, 437, 438, 439, 450, 451,
-      452, 461, 471, 475, 481, 482, 483, 484, 490, 500, 501, 510, 516, 517, 520, 522, 530, 531, 540,
-      541, 551, 552, 553, 560, 565, 570, 571, 572, 580, 581, 590, 591, 600, 615, 616, 620, 625, 630,
-      640, 645, 651, 652, 660, 663, 665, 666, 670, 678, 680, 690, 692, 694, 696, 698, 700, 701, 703,
-      704, 705, 706, 710, 711, 712, 713, 714, 720, 730, 731, 732, 740, 750, 760, 770, 771, 775, 780,
-      781, 790, 800, 811, 812, 816, 817, 820, 830, 840, 850, 900, 910, 920, 940, 950, 970, 983, 986, 990
-    ),
-    unregion = "Other"
-  )
-  # Simplified: attach via countrycode if available
-  if (requireNamespace("countrycode", quietly = TRUE)) {
-    grave_d <- grave_d |>
-      mutate(
-        unregiona = countrycode::countrycode(COWcode_a, "cown", "un.region.name",
-                                             warn = FALSE),
-        unregionb = countrycode::countrycode(COWcode_b, "cown", "un.region.name",
-                                             warn = FALSE)
-      )
-    message("  Added unregiona/unregionb via countrycode package.")
-  }
-}
-
-# -------------------------------------------------------------------------
-# 6. CLEAN UP AND STANDARDISE COLUMN ORDER
+# 5. CLEAN UP AND STANDARDISE COLUMN ORDER
 # -------------------------------------------------------------------------
 
 # Define preferred column order (keys first, then outcomes, then controls)
@@ -200,7 +167,7 @@ rest_cols  <- setdiff(all_cols, front_cols)
 grave_d    <- grave_d |> select(all_of(c(front_cols, rest_cols)))
 
 # -------------------------------------------------------------------------
-# 7. SAVE OUTPUTS
+# 6. SAVE OUTPUTS
 # -------------------------------------------------------------------------
 
 dir.create(here("output"), showWarnings = FALSE, recursive = TRUE)
