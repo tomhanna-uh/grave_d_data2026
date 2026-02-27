@@ -4,6 +4,9 @@
 #
 # Run this file first (or source it from other scripts) to ensure all
 # required packages are installed and loaded.
+#
+# NOTE: Dependencies are managed using `renv`.
+# To install packages, run: renv::restore()
 # =============================================================================
 
 # --- Core data manipulation ---
@@ -28,9 +31,3 @@ library(stringr)     # String manipulation (part of tidyverse, explicit load)
 library(cli)         # Progress bars and CLI messaging
 
 message("[00_packages.R] All packages loaded.")
-
-# Install any missing packages:
-# pak::pkg_install(c(
-#   "here", "tidyverse", "data.table", "haven", "readxl",
-#   "countrycode", "lubridate", "stringr", "cli"
-# ))

@@ -40,6 +40,8 @@ output/
 
 # R package library (if using renv)
 renv/library/
+renv/python/
+renv/staging/
 renv/.cache/
 packrat/lib/
 packrat/lib-ext/
