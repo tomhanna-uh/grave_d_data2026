@@ -47,13 +47,18 @@ if (file.exists(mids_path_csv)) {
   # Try alternate filenames
   mids_files <- list.files(here("source_data", "mids"), pattern = ".*\\.csv$|.*\\.dta$",
                            full.names = TRUE)
-  if (length(mids_files) > 0) {
+  if (length(mids_files) == 1) {
     message(sprintf("[02] Found MIDs file: %s", mids_files[1]))
     if (grepl("\\.csv$", mids_files[1])) {
       mids_raw <- as_tibble(data.table::fread(file = mids_files[1]))
     } else {
       mids_raw <- haven::read_dta(mids_files[1])
     }
+  } else if (length(mids_files) > 1) {
+    stop(
+      sprintf("[02] Ambiguous MIDs files found: %s\n  Please ensure only one MIDs file exists in source_data/mids/",
+              paste(basename(mids_files), collapse = ", "))
+    )
   } else {
     stop(
       "[02_build_conflict.R] MIDs source file not found.\n",
