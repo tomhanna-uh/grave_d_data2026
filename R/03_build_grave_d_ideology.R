@@ -50,11 +50,11 @@ message(sprintf("[03] Loaded spine: %d rows", nrow(spine)))
 # 2. Load Archigos leader data
 # -----------------------------------------------------------------------------
 # Archigos provides leader IDs, tenure dates, and basic attributes.
-# Expected in source_data/archigos/ as .dta, .csv, or .xlsx
+# Expected in source_data/archigos/ as .dta, .csv, .tsv, or .xlsx
 
 archigos_files <- list.files(
   here("source_data", "archigos"),
-  pattern = ".*\\.(csv|dta|xlsx)$",
+  pattern = ".*\\.(csv|tsv|dta|xlsx)$",
   full.names = TRUE, ignore.case = TRUE
 )
 
@@ -65,6 +65,8 @@ if (length(archigos_files) == 0) {
   message(sprintf("[03] Found Archigos file: %s", archigos_files[1]))
   if (grepl("\\.csv$", archigos_files[1], ignore.case = TRUE)) {
     archigos_raw <- as_tibble(data.table::fread(file = archigos_files[1]))
+      } else if (grepl("\\.tsv$", archigos_files[1], ignore.case = TRUE)) {
+    archigos_raw <- read_tsv(archigos_files[1], show_col_types = FALSE)
   } else if (grepl("\\.dta$", archigos_files[1], ignore.case = TRUE)) {
     archigos_raw <- haven::read_dta(archigos_files[1])
   } else {
@@ -82,7 +84,7 @@ if (length(archigos_files) == 0) {
 
 colgan_files <- list.files(
   here("source_data", "colgan"),
-  pattern = ".*\\.(csv|dta|xlsx)$",
+  pattern = ".*\\.(csv|tsv|dta|xlsx)$",
   full.names = TRUE, ignore.case = TRUE
 )
 
@@ -110,7 +112,7 @@ if (length(colgan_files) == 0) {
 
 ideology_files <- list.files(
   here("source_data", "leader_ideology"),
-  pattern = ".*\\.(csv|dta|xlsx)$",
+  pattern = ".*\\.(csv|tsv|dta|xlsx)$",
   full.names = TRUE, ignore.case = TRUE
 )
 
