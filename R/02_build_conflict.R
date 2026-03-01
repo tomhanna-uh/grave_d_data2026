@@ -2,9 +2,9 @@
 # 02_build_conflict.R
 # Merge MIDs v4.0 conflict outcomes onto the FBIC spine
 #
-# Input:  output/spine_fbic.rds         (from 01_build_fbic_spine.R)
-#         source_data/mids/             (MIDs v4.0 dyadic dataset)
-# Output: output/spine_conflict.rds
+# Input:  data/spine_fbic.rds      (from 01_build_fbic_spine.R)
+#         source_data/cow/          (MIDs v4.0 dyadic dataset)
+# Output: data/spine_conflict.rds
 #
 # Variables built:
 #   hihosta          -- Highest Hostility Level Side A (ordinal 1-5)
@@ -19,11 +19,11 @@ message("[02_build_conflict.R] Starting MIDs conflict merge...")
 # -----------------------------------------------------------------------------
 # 1. Load spine
 # -----------------------------------------------------------------------------
-spine_path <- here("output", "spine_fbic.rds")
+spine_path <- here("data", "spine_fbic.rds")
 if (!file.exists(spine_path)) {
   stop(
     "[02] Spine not found. Run R/01_build_fbic_spine.R first.\n",
-    "  Expected: output/spine_fbic.rds"
+    "  Expected: data/spine_fbic.rds"
   )
 }
 spine <- readRDS(spine_path)
@@ -32,21 +32,26 @@ message(sprintf("[02] Loaded spine: %d rows", nrow(spine)))
 # -----------------------------------------------------------------------------
 # 2. Load MIDs v4.0 dyadic dataset
 # -----------------------------------------------------------------------------
-# Expected file: source_data/mids/dyadic_mid_4.02.csv (or .dta)
+# Expected file: source_data/cow/dyadic_mid_4.02.csv (or .dta)
+# MIDs are a COW product; raw files live under source_data/cow/
 # Download from: https://correlatesofwar.org/data-sets/MIDs
 # Key variable: hihosta = highest hostility level for Side A initiator
 
-mids_path_csv <- here("source_data", "mids", "dyadic_mid_4.02.csv")
-mids_path_dta <- here("source_data", "mids", "dyadic_mid_4.02.dta")
+mids_path_csv <- here("source_data", "cow", "dyadic_mid_4.02.csv")
+mids_path_dta <- here("source_data", "cow", "dyadic_mid_4.02.dta")
 
 if (file.exists(mids_path_csv)) {
   mids_raw <- as_tibble(data.table::fread(file = mids_path_csv))
 } else if (file.exists(mids_path_dta)) {
   mids_raw <- haven::read_dta(mids_path_dta)
 } else {
-  # Try alternate filenames
-  mids_files <- list.files(here("source_data", "mids"), pattern = ".*\\.csv$|.*\\.dta$",
-                           full.names = TRUE)
+  # Try alternate filenames in source_data/cow/
+  mids_files <- list.files(
+    here("source_data", "cow"),
+    pattern = ".*mid.*\\.csv$|.*mid.*\\.dta$",
+    full.names = TRUE,
+    ignore.case = TRUE
+  )
   if (length(mids_files) > 0) {
     message(sprintf("[02] Found MIDs file: %s", mids_files[1]))
     if (grepl("\\.csv$", mids_files[1])) {
@@ -57,7 +62,7 @@ if (file.exists(mids_path_csv)) {
   } else {
     stop(
       "[02_build_conflict.R] MIDs source file not found.\n",
-      "  Place dyadic MIDs v4.0 file in: source_data/mids/\n",
+      "  Place dyadic MIDs v4.0 file in: source_data/cow/\n",
       "  Download from: https://correlatesofwar.org/data-sets/MIDs"
     )
   }
@@ -113,8 +118,7 @@ mids_dyadic <- mids_raw |>
 
 message(sprintf(
   "[02] MIDs prepared: %d dyad-year rows, %d MID-initiated obs",
-  nrow(mids_dyadic),
-  sum(mids_dyadic$mid_initiated, na.rm = TRUE)
+  nrow(mids_dyadic), sum(mids_dyadic$mid_initiated, na.rm = TRUE)
 ))
 
 # -----------------------------------------------------------------------------
@@ -128,7 +132,7 @@ spine_conflict <- spine |>
   ) |>
   mutate(
     # Rows with no MID get coded as 0 (no conflict)
-    hihosta      = if_else(is.na(hihosta), 0L, hihosta),
+    hihosta       = if_else(is.na(hihosta), 0L, hihosta),
     mid_initiated = if_else(is.na(mid_initiated), 0L, mid_initiated)
   )
 
@@ -146,9 +150,9 @@ spine_conflict <- spine_conflict |>
   arrange(dyad, year) |>
   group_by(dyad) |>
   mutate(
-    conflict_year  = if_else(mid_initiated == 1L, year, NA_integer_),
-    last_conflict  = cummax(if_else(is.na(conflict_year), 0L, conflict_year)),
-    peace_years    = if_else(last_conflict == 0L, 35L, year - last_conflict),
+    conflict_year = if_else(mid_initiated == 1L, year, NA_integer_),
+    last_conflict = cummax(if_else(is.na(conflict_year), 0L, conflict_year)),
+    peace_years   = if_else(last_conflict == 0L, 35L, year - last_conflict),
     t  = peace_years,
     t2 = t^2,
     t3 = t^3
@@ -159,6 +163,7 @@ spine_conflict <- spine_conflict |>
 # -----------------------------------------------------------------------------
 # 7. Save
 # -----------------------------------------------------------------------------
-saveRDS(spine_conflict, here("output", "spine_conflict.rds"))
-message("[02_build_conflict.R] Saved: output/spine_conflict.rds")
+saveRDS(spine_conflict, here("data", "spine_conflict.rds"))
+
+message("[02_build_conflict.R] Saved: data/spine_conflict.rds")
 message("[02_build_conflict.R] Done.")
