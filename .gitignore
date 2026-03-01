@@ -4,11 +4,14 @@
 # GRAVE-D Master Dyadic Dataset Builder
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# DATA — never commit raw source data or derived output
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# DATA -- never commit raw source data or derived output
+# -------------------------------------------------------------------------
 source_data/
-output/
+
+# -------------------------------------------------------------------------
+# DATA FILE FORMATS -- catch any stray data files at repo root
+# -------------------------------------------------------------------------
 *.csv
 *.dta
 *.sav
@@ -19,19 +22,31 @@ output/
 *.feather
 *.parquet
 
+# -------------------------------------------------------------------------
 # Exceptions: keep placeholder/gitkeep files so folders exist in repo
+# -------------------------------------------------------------------------
 !source_data/.gitkeep
 !source_data/fbic/.gitkeep
-!source_data/mids/.gitkeep
-!source_data/vdem/.gitkeep
 !source_data/cow/.gitkeep
-!source_data/grave_d/.gitkeep
-!source_data/wdi/.gitkeep
-!output/.gitkeep
+!source_data/colgan/.gitkeep
+!source_data/archigos/.gitkeep
+!source_data/leader_ideology/.gitkeep
+!source_data/atop/.gitkeep
+!source_data/econ/.gitkeep
+!source_data/econ/fraser_institute/.gitkeep
+!source_data/econ/maddison/.gitkeep
+!source_data/econ/relational_export_dataset/.gitkeep
+!source_data/econ/ross_oil_gas/.gitkeep
+!source_data/econ/swiid/.gitkeep
+!source_data/econ/codebooks/.gitkeep
+!source_data/controls/.gitkeep
+!source_data/controls/cinc/.gitkeep
+!source_data/controls/state_capacity/.gitkeep
+!source_data/vdem/.gitkeep
 
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # R-specific
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 .Rhistory
 .RData
 .Rapp.history
@@ -46,91 +61,19 @@ packrat/lib-ext/
 packrat/lib-R/
 packrat/src/
 
-# R check output
-*.Rcheck/
-
-# knitr / rmarkdown caches
+# -------------------------------------------------------------------------
+# Quarto / knitr
+# -------------------------------------------------------------------------
+/_site/
+/_book/
 *_cache/
-/cache/
-*.knit.md
-*.utf8.md
-
-# -----------------------------------------------------------------------------
-# Quarto output
-# -----------------------------------------------------------------------------
-_site/
-_book/
-docs/_site/
-docs/_book/
-/.quarto/
-docs/.quarto/
+*_files/
 *.html
-!docs/*.html
+!README.html
 
-# Pandoc intermediates
-*.tex
-*.log
-*.aux
-*.out
-*.toc
-*.lof
-*.lot
-*.blg
-*.bbl
-
-# PDF output (generated; not source)
-*.pdf
-
-# -----------------------------------------------------------------------------
-# RStudio
-# -----------------------------------------------------------------------------
-.Rproj.user
-*.Rproj.user/
-.rstudio/
-
-# -----------------------------------------------------------------------------
-# OS-generated files
-# -----------------------------------------------------------------------------
-# macOS
+# -------------------------------------------------------------------------
+# OS junk
+# -------------------------------------------------------------------------
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
-.Spotlight-V100
-.Trashes
-
-# Windows
 Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-
-# Linux
-*~
-
-# -----------------------------------------------------------------------------
-# Editor / IDE artifacts
-# -----------------------------------------------------------------------------
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# -----------------------------------------------------------------------------
-# Environment / secrets
-# -----------------------------------------------------------------------------
-.env
-.Renviron
-secrets/
-*.key
-*.pem
-
-# -----------------------------------------------------------------------------
-# Temp / scratch files
-# -----------------------------------------------------------------------------
-temp_check.txt
-*_gem.R
-junk_code.qmd
-old_code_chunks/
-scratch/
+desktop.ini
