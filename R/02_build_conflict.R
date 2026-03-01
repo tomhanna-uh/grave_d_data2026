@@ -81,10 +81,10 @@ mids_raw <- mids_raw |>
 # Check for common naming variants
 if ("ccode1" %in% names(mids_raw) && "ccode2" %in% names(mids_raw)) {
   mids_raw <- mids_raw |>
-    rename(COWcode_a = ccode1, COWcode_b = ccode2)
+    rename(COWcode_a = statea, COWcode_b = stateb)
 } else if ("sidea" %in% names(mids_raw) && "sideb" %in% names(mids_raw)) {
   mids_raw <- mids_raw |>
-    rename(COWcode_a = sidea, COWcode_b = sideb)
+    rename(COWcode_a = statea, COWcode_b = stateb)
 }
 
 # Ensure hihosta is present
