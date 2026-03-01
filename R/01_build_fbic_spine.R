@@ -3,7 +3,7 @@
 # Build the directed dyad-year panel spine from the FBIC dataset
 #
 # Input:  source_data/fbic/  -- FBIC dataset file(s)
-# Output: output/spine_fbic.rds
+# Output: data/spine_fbic.rds
 #
 # The FBIC dataset provides the dyadic connectivity "bandwidth" variables
 # and serves as the structural spine for the GRAVE-D master dataset.
@@ -25,6 +25,7 @@ message("[01_build_fbic_spine.R] Starting FBIC spine construction...")
 # -----------------------------------------------------------------------------
 # Expected file: source_data/fbic/FBIC_dyadic.csv (or .dta)
 # Adjust filename as needed based on downloaded FBIC release.
+
 fbic_path_csv <- here("source_data", "fbic", "FBIC_dyadic.csv")
 fbic_path_dta <- here("source_data", "fbic", "FBIC_dyadic.dta")
 
@@ -49,6 +50,7 @@ message(sprintf("[01] FBIC raw: %d rows x %d cols", nrow(fbic_raw), ncol(fbic_ra
 # -----------------------------------------------------------------------------
 # FBIC uses iso3a/iso3b for country identifiers. We convert to COW codes.
 # Bandwidth variables: check for lowercase names
+
 fbic_raw <- fbic_raw |>
   rename_with(tolower)
 
@@ -65,24 +67,23 @@ if (length(missing_cols) > 0) {
 # -----------------------------------------------------------------------------
 # 3. Convert ISO3 codes to COW codes
 # -----------------------------------------------------------------------------
+
 fbic_coded <- fbic_raw |>
   mutate(
     COWcode_a = countrycode(
-      iso3a, origin = "iso3c", destination = "cown",
-      warn = FALSE
+      iso3a, origin = "iso3c", destination = "cown", warn = FALSE
     ),
     COWcode_b = countrycode(
-      iso3b, origin = "iso3c", destination = "cown",
-      warn = FALSE
+      iso3b, origin = "iso3c", destination = "cown", warn = FALSE
     ),
     # UN Geographic regions
     unregiona = countrycode(
-      iso3a, origin = "iso3c", destination = "un.regionsub.name",
-      warn = FALSE
+      iso3a, origin = "iso3c",
+      destination = "un.regionsub.name", warn = FALSE
     ),
     unregionb = countrycode(
-      iso3b, origin = "iso3c", destination = "un.regionsub.name",
-      warn = FALSE
+      iso3b, origin = "iso3c",
+      destination = "un.regionsub.name", warn = FALSE
     )
   )
 
@@ -91,15 +92,16 @@ n_before <- nrow(fbic_coded)
 fbic_coded <- fbic_coded |>
   filter(!is.na(COWcode_a), !is.na(COWcode_b))
 n_after <- nrow(fbic_coded)
+
 message(sprintf(
   "[01] Dropped %d rows where COW codes could not be assigned (%.1f%%)",
-  n_before - n_after,
-  100 * (n_before - n_after) / n_before
+  n_before - n_after, 100 * (n_before - n_after) / n_before
 ))
 
 # -----------------------------------------------------------------------------
 # 4. Filter to 1946-2020 coverage window
 # -----------------------------------------------------------------------------
+
 fbic_filtered <- fbic_coded |>
   filter(year >= 1946L, year <= 2020L)
 
@@ -112,12 +114,10 @@ message(sprintf(
 # 5. Select and rename bandwidth variables
 # -----------------------------------------------------------------------------
 # FBIC bandwidth variable naming may vary by release; handle common variants
+
 bandwidth_vars <- c(
-  "bandwidth",
-  "economicbandwidth",
-  "politicalbandwidth",
-  "securitybandwidth",
-  "socialbandwidth"
+  "bandwidth", "economicbandwidth", "politicalbandwidth",
+  "securitybandwidth", "socialbandwidth"
 )
 
 # Check which bandwidth vars are present
@@ -128,7 +128,7 @@ if (length(missing_bw) > 0) {
   warning(
     "[01] Some bandwidth variables not found in FBIC: ",
     paste(missing_bw, collapse = ", "),
-    "\n  They will be set to NA in the spine."
+    "\n They will be set to NA in the spine."
   )
   for (v in missing_bw) {
     fbic_filtered[[v]] <- NA_real_
@@ -138,12 +138,11 @@ if (length(missing_bw) > 0) {
 # -----------------------------------------------------------------------------
 # 6. Build final spine
 # -----------------------------------------------------------------------------
+
 spine <- fbic_filtered |>
   select(
     # Identification
-    COWcode_a, COWcode_b, year,
-    iso3a, iso3b,
-    unregiona, unregionb,
+    COWcode_a, COWcode_b, year, iso3a, iso3b, unregiona, unregionb,
     # Bandwidth variables
     all_of(bandwidth_vars)
   ) |>
@@ -162,15 +161,18 @@ message(sprintf(
   "[01] Spine: %d directed dyad-year observations | %d unique dyads | years %d-%d",
   nrow(spine),
   n_distinct(spine$dyad),
-  min(spine$year), max(spine$year)
+  min(spine$year),
+  max(spine$year)
 ))
 
 # -----------------------------------------------------------------------------
 # 7. Save intermediate output
 # -----------------------------------------------------------------------------
-dir.create(here("output"), showWarnings = FALSE)
-saveRDS(spine, here("output", "spine_fbic.rds"))
-message("[01_build_fbic_spine.R] Saved: output/spine_fbic.rds")
 
+dir.create(here("data"), showWarnings = FALSE)
+saveRDS(spine, here("data", "spine_fbic.rds"))
+
+message("[01_build_fbic_spine.R] Saved: data/spine_fbic.rds")
 message("[01_build_fbic_spine.R] Done.")
+
 rm(fbic_raw, fbic_coded, fbic_filtered)
