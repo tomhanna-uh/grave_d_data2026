@@ -11,7 +11,7 @@
 #
 # FBIC Variables built:
 #   bandwidth, economicbandwidth, politicalbandwidth,
-#   securitybandwidth, socialbandwidth
+#   securitybandwidth
 # Identification variables added:
 #   COWcode_a, COWcode_b, year, iso3a, iso3b, unregiona, unregionb
 # =============================================================================
@@ -117,7 +117,7 @@ message(sprintf(
 
 bandwidth_vars <- c(
   "bandwidth", "economicbandwidth", "politicalbandwidth",
-  "securitybandwidth", "socialbandwidth"
+  "securitybandwidth"
 )
 
 # Check which bandwidth vars are present
