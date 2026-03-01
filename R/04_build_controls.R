@@ -35,7 +35,10 @@ if (requireNamespace("vdemdata", quietly = TRUE)) {
     select(
       COWcode = COWcode, year = year,
       v2x_libdem, v2x_corr,
-      v2exl_legitideol, v2exl_legitperf, v2exl_legitlead
+      v2exl_legitideol, v2exl_legitperf, v2exl_legitlead,
+      v2exl_legitratio, v2x_polyarchy,
+      v2pepwrses, v2pepwrsoc, v2x_cspart,
+      v2dlreason, v2dlcommon, v2dlcountr
     ) |>
     filter(!is.na(COWcode))
   message(sprintf("[04] V-Dem: %d country-year rows", nrow(vdem_data)))
@@ -296,6 +299,64 @@ if (!is.null(export_data)) {
 # 7. Derived variables
 # -----------------------------------------------------------------------------
 spine_controls <- spine_controls |>
+
+# -----------------------------------------------------------------------------
+# 6j. Construct GRAVE-D sidea_* ideology & support variables
+# -----------------------------------------------------------------------------
+# These are derived from V-Dem legitimation indicators (merged in 6a as
+# _a / _b suffixed columns). The raw leader data from Archigos/Colgan/
+# leader_ideology was attached in 03_build_grave_d_ideology.R.
+#
+# V-Dem source -> GRAVE-D target mapping:
+#   v2exl_legitideol_a  -> sidea_revisionist_domestic (ideology-based legit)
+#   v2exl_legitlead_a   -> sidea_dynamic_leader (personalist legit)
+#   v2pepwrses_a        -> sidea_party_elite_support (power by SES)
+#   v2pepwrsoc_a        -> sidea_ethnic_racial_support (power by social group)
+#   v2x_cspart_a        -> sidea_rural_worker_support (civil society)
+#   v2dlreason_a        -> sidea_winning_coalition_size (deliberation proxy)
+#
+# Thresholds and sub-type breakdowns (nationalist, socialist, religious,
+# reactionary, separatist) require supplementary coding from Colgan or
+# manual classification. Placeholders below use the continuous V-Dem
+# scores directly; refine thresholds as needed.
+
+if ("v2exl_legitideol_a" %in% names(spine_controls)) {
+  spine_controls <- spine_controls |>
+    mutate(
+      # Ideology-based legitimation (continuous, higher = more ideological)
+      sidea_revisionist_domestic = v2exl_legitideol_a,
+
+      # Sub-types: these require external coding to disaggregate.
+      # Placeholder: set to NA until Colgan/manual classification is added.
+      sidea_nationalist_revisionist_domestic = NA_real_,
+      sidea_socialist_revisionist_domestic   = NA_real_,
+      sidea_religious_revisionist_domestic   = NA_real_,
+      sidea_reactionary_revisionist_domestic = NA_real_,
+      sidea_separatist_revisionist_domestic  = NA_real_,
+
+      # Personalist/charismatic leader legitimation
+      sidea_dynamic_leader = v2exl_legitlead_a
+    )
+  message("[04] Built sidea_revisionist_domestic, sidea_dynamic_leader from V-Dem.")
+} else {
+  message("[04] V-Dem legitimation columns not found; skipping sidea_* ideology.")
+}
+
+# Support group variables from V-Dem
+if ("v2pepwrses_a" %in% names(spine_controls)) {
+  spine_controls <- spine_controls |>
+    mutate(
+      sidea_party_elite_support   = v2pepwrses_a,
+      sidea_ethnic_racial_support = v2pepwrsoc_a,
+      sidea_rural_worker_support  = v2x_cspart_a,
+      sidea_military_support      = NA_real_,  # No direct V-Dem proxy
+      sidea_religious_support     = NA_real_,  # Needs WRP or manual coding
+      sidea_winning_coalition_size = v2dlreason_a
+    )
+  message("[04] Built sidea_*_support variables from V-Dem.")
+} else {
+  message("[04] V-Dem power distribution columns not found; skipping support vars.")
+}
   mutate(
     targets_democracy = if_else(
       "v2x_libdem_b" %in% names(spine_controls) & !is.na(v2x_libdem_b),
