@@ -72,22 +72,37 @@ if (length(cinc_files) > 0) {
 # -----------------------------------------------------------------------------
 # 3. ATOP (Alliance Treaty Obligations and Provisions)
 # -----------------------------------------------------------------------------
-atop_files <- list.files(
-  here("source_data", "atop"),
-  pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
-)
-if (length(atop_files) > 0) {
-  message(sprintf("[04] Found ATOP file: %s", atop_files[1]))
-  if (grepl("\\.csv$", atop_files[1])) {
-    atop_data <- as_tibble(data.table::fread(atop_files[1]))
-  } else {
-    atop_data <- haven::read_dta(atop_files[1])
+# Expected file: atop5_1ddyr_NNA.csv (directed dyad-year, non-missing)
+atop_path <- here("source_data", "atop", "atop5_1ddyr_NNA.csv")
+
+if (file.exists(atop_path)) {
+  atop_data <- as_tibble(data.table::fread(atop_path)) |>
+    rename_with(tolower)
+  # ATOP ddyr uses statea/stateb (COW codes) + year
+  # Rename to match spine keys for merge in section 6c
+  if (all(c("statea", "stateb", "year") %in% names(atop_data))) {
+    atop_data <- atop_data |>
+      rename(COWcode_a = statea, COWcode_b = stateb)
   }
-  atop_data <- atop_data |> rename_with(tolower)
   message(sprintf("[04] ATOP: %d rows x %d cols", nrow(atop_data), ncol(atop_data)))
 } else {
-  warning("[04] No ATOP file found in source_data/atop/")
-  atop_data <- NULL
+  # Fallback: try any CSV/DTA in source_data/atop/
+  atop_files <- list.files(
+    here("source_data", "atop"),
+    pattern = ".*ddyr.*\\.csv$", full.names = TRUE, ignore.case = TRUE
+  )
+  if (length(atop_files) > 0) {
+    atop_data <- as_tibble(data.table::fread(atop_files[1])) |>
+      rename_with(tolower)
+    if (all(c("statea", "stateb", "year") %in% names(atop_data))) {
+      atop_data <- atop_data |>
+        rename(COWcode_a = statea, COWcode_b = stateb)
+    }
+    message(sprintf("[04] ATOP (fallback): %s | %d rows", basename(atop_files[1]), nrow(atop_data)))
+  } else {
+    warning("[04] atop5_1ddyr_NNA.csv not found in source_data/atop/")
+    atop_data <- NULL
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -232,15 +247,18 @@ if (!is.null(cinc_data)) {
   message("[04] Merged CINC (both sides).")
 }
 
-# 6c. ATOP (dyad-year)
-# TODO: Adjust merge keys based on your ATOP file structure.
-# Common ATOP dyadic files use (stateA, stateB, year) or similar.
-if (!is.null(atop_data)) {
-  # Adjust column names as needed for your ATOP release
-  message("[04] ATOP loaded. Merge keys should be adjusted to match your ATOP file.")
-  # Example:
-  # spine_controls <- spine_controls |>
-  #   left_join(atop_data, by = c("COWcode_a" = "statea", "COWcode_b" = "stateb", "year"))
+# 6c. ATOP (dyad-year -- already keyed as COWcode_a, COWcode_b, year)
+if (!is.null(atop_data) &&
+    all(c("COWcode_a", "COWcode_b", "year") %in% names(atop_data))) {
+  # Select ATOP alliance indicator columns; adjust as needed
+  atop_merge <- atop_data |>
+    distinct(COWcode_a, COWcode_b, year, .keep_all = TRUE)
+  spine_controls <- spine_controls |>
+    left_join(atop_merge, by = c("COWcode_a", "COWcode_b", "year"))
+  message(sprintf("[04] Merged ATOP: %d alliance columns.",
+                  ncol(atop_merge) - 3))
+} else if (!is.null(atop_data)) {
+  message("[04] ATOP loaded but COWcode_a/COWcode_b/year keys not found. Skipping merge.")
 }
 
 # 6d. WRP religions (country-year -> both sides)
