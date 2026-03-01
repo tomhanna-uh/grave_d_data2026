@@ -79,13 +79,14 @@ mids_raw <- mids_raw |>
 # Identify COW code columns (vary by MIDs release version)
 # v4.02 uses: ccode1, ccode2, year, hihosta (for directed dyadic)
 # Check for common naming variants
-if ("ccode1" %in% names(mids_raw) && "ccode2" %in% names(mids_raw)) {
-  mids_raw <- mids_raw |>
-    rename(COWcode_a = statea, COWcode_b = stateb)
-} else if ("sidea" %in% names(mids_raw) && "sideb" %in% names(mids_raw)) {
-  mids_raw <- mids_raw |>
-    rename(COWcode_a = statea, COWcode_b = stateb)
+if ("statea" %in% names(mids_raw) && "stateb" %in% names(mids_raw)) {
+        mids_raw <- mids_raw |>
+                rename(COWcode_a = statea, COWcode_b = stateb)
+} else if ("ccode1" %in% names(mids_raw) && "ccode2" %in% names(mids_raw)) {
+        mids_raw <- mids_raw |>
+                rename(COWcode_a = ccode1, COWcode_b = ccode2)
 }
+
 
 # Ensure hihosta is present
 if (!"hihosta" %in% names(mids_raw)) {
