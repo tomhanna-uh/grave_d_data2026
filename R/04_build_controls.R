@@ -113,6 +113,7 @@ if (file.exists(wrp_path)) {
   wrp_data <- as_tibble(data.table::fread(wrp_path)) |> rename_with(tolower)
   if ("ccode" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = ccode)
   if ("cowcode" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = cowcode)
+    if ("state" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = state)
   message(sprintf("[04] WRP religions: %d rows", nrow(wrp_data)))
 } else {
   warning("[04] WRP_national.csv not found in source_data/cow/")
