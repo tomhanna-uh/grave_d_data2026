@@ -2,7 +2,7 @@
 # 04_build_controls.R
 # Merge control variables from multiple sources onto the ideology spine
 #
-# Input:  data/spine_ideology.rds         (from 03_build_grave_d_ideology.R)
+# Input:  data/spine_ideology.rds          (from 03_build_grave_d_ideology.R)
 #         source_data/atop/                (ATOP alliance data)
 #         source_data/controls/cinc/       (CINC / National Material Capabilities)
 #         source_data/cow/WRP_national.csv (COW World Religions)
@@ -14,7 +14,6 @@
 #         V-Dem R package                  (regime and democracy measures)
 # Output: data/spine_controls.rds
 # =============================================================================
-
 source(here::here("R", "00_packages.R"))
 
 message("[04_build_controls.R] Starting controls merge...")
@@ -46,6 +45,7 @@ if (requireNamespace("vdemdata", quietly = TRUE)) {
   warning("[04] vdemdata package not installed. V-Dem variables will be absent.")
   vdem_data <- NULL
 }
+
 # -----------------------------------------------------------------------------
 # 2. CINC (National Material Capabilities)
 # -----------------------------------------------------------------------------
@@ -62,6 +62,7 @@ if (length(cinc_files) > 0) {
   }
   cinc_data <- cinc_data |> rename_with(tolower)
   if ("ccode" %in% names(cinc_data)) cinc_data <- cinc_data |> rename(COWcode = ccode)
+  if ("cowcode" %in% names(cinc_data)) cinc_data <- cinc_data |> rename(COWcode = cowcode)
   cinc_data <- cinc_data |> select(COWcode, year, cinc) |> filter(!is.na(cinc))
   message(sprintf("[04] CINC: %d country-year rows", nrow(cinc_data)))
 } else {
@@ -74,7 +75,6 @@ if (length(cinc_files) > 0) {
 # -----------------------------------------------------------------------------
 # Expected file: atop5_1ddyr_NNA.csv (directed dyad-year, non-missing)
 atop_path <- here("source_data", "atop", "atop5_1ddyr_NNA.csv")
-
 if (file.exists(atop_path)) {
   atop_data <- as_tibble(data.table::fread(atop_path)) |>
     rename_with(tolower)
@@ -112,6 +112,7 @@ wrp_path <- here("source_data", "cow", "WRP_national.csv")
 if (file.exists(wrp_path)) {
   wrp_data <- as_tibble(data.table::fread(wrp_path)) |> rename_with(tolower)
   if ("ccode" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = ccode)
+  if ("cowcode" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = cowcode)
   message(sprintf("[04] WRP religions: %d rows", nrow(wrp_data)))
 } else {
   warning("[04] WRP_national.csv not found in source_data/cow/")
@@ -136,6 +137,7 @@ if (length(ross_files) > 0) {
   }
   ross_data <- ross_data |> rename_with(tolower)
   if ("ccode" %in% names(ross_data)) ross_data <- ross_data |> rename(COWcode = ccode)
+  if ("cowcode" %in% names(ross_data)) ross_data <- ross_data |> rename(COWcode = cowcode)
   message(sprintf("[04] Ross: %d rows", nrow(ross_data)))
 } else {
   ross_data <- NULL
@@ -157,6 +159,7 @@ if (length(maddison_files) > 0) {
   }
   maddison_data <- maddison_data |> rename_with(tolower)
   if ("ccode" %in% names(maddison_data)) maddison_data <- maddison_data |> rename(COWcode = ccode)
+  if ("cowcode" %in% names(maddison_data)) maddison_data <- maddison_data |> rename(COWcode = cowcode)
   message(sprintf("[04] Maddison: %d rows", nrow(maddison_data)))
 } else {
   maddison_data <- NULL
@@ -178,6 +181,7 @@ if (length(swiid_files) > 0) {
   }
   swiid_data <- swiid_data |> rename_with(tolower)
   if ("ccode" %in% names(swiid_data)) swiid_data <- swiid_data |> rename(COWcode = ccode)
+  if ("cowcode" %in% names(swiid_data)) swiid_data <- swiid_data |> rename(COWcode = cowcode)
   message(sprintf("[04] SWIID: %d rows", nrow(swiid_data)))
 } else {
   swiid_data <- NULL
@@ -188,6 +192,7 @@ fraser_path <- here("source_data", "econ", "fraser_institute", "black_market_exc
 if (file.exists(fraser_path)) {
   fraser_data <- as_tibble(data.table::fread(fraser_path)) |> rename_with(tolower)
   if ("ccode" %in% names(fraser_data)) fraser_data <- fraser_data |> rename(COWcode = ccode)
+  if ("cowcode" %in% names(fraser_data)) fraser_data <- fraser_data |> rename(COWcode = cowcode)
   message(sprintf("[04] Fraser: %d rows", nrow(fraser_data)))
 } else {
   fraser_data <- NULL
@@ -314,11 +319,6 @@ if (!is.null(export_data)) {
 }
 
 # -----------------------------------------------------------------------------
-# 7. Derived variables
-# -----------------------------------------------------------------------------
-spine_controls <- spine_controls |>
-
-# -----------------------------------------------------------------------------
 # 6j. Construct GRAVE-D sidea_* ideology & support variables
 # -----------------------------------------------------------------------------
 # These are derived from V-Dem legitimation indicators (merged in 6a as
@@ -364,17 +364,22 @@ if ("v2exl_legitideol_a" %in% names(spine_controls)) {
 if ("v2pepwrses_a" %in% names(spine_controls)) {
   spine_controls <- spine_controls |>
     mutate(
-      sidea_party_elite_support   = v2pepwrses_a,
-      sidea_ethnic_racial_support = v2pepwrsoc_a,
-      sidea_rural_worker_support  = v2x_cspart_a,
-      sidea_military_support      = NA_real_,  # No direct V-Dem proxy
-      sidea_religious_support     = NA_real_,  # Needs WRP or manual coding
+      sidea_party_elite_support    = v2pepwrses_a,
+      sidea_ethnic_racial_support  = v2pepwrsoc_a,
+      sidea_rural_worker_support   = v2x_cspart_a,
+      sidea_military_support       = NA_real_,   # No direct V-Dem proxy
+      sidea_religious_support      = NA_real_,   # Needs WRP or manual coding
       sidea_winning_coalition_size = v2dlreason_a
     )
   message("[04] Built sidea_*_support variables from V-Dem.")
 } else {
   message("[04] V-Dem power distribution columns not found; skipping support vars.")
 }
+
+# -----------------------------------------------------------------------------
+# 7. Derived variables
+# -----------------------------------------------------------------------------
+spine_controls <- spine_controls |>
   mutate(
     targets_democracy = if_else(
       "v2x_libdem_b" %in% names(spine_controls) & !is.na(v2x_libdem_b),
@@ -393,6 +398,5 @@ message(sprintf(
 # 8. Save
 # -----------------------------------------------------------------------------
 saveRDS(spine_controls, here("data", "spine_controls.rds"))
-
 message("[04_build_controls.R] Saved: data/spine_controls.rds")
 message("[04_build_controls.R] Done.")
