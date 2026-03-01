@@ -10,6 +10,12 @@
 source_data/
 
 # -------------------------------------------------------------------------
+# INTERMEDIATE OUTPUT -- data/ holds .rds intermediates; never commit
+# -------------------------------------------------------------------------
+data/
+!data/.gitkeep
+
+# -------------------------------------------------------------------------
 # DATA FILE FORMATS -- catch any stray data files at repo root
 # -------------------------------------------------------------------------
 *.csv
@@ -43,6 +49,13 @@ source_data/
 !source_data/controls/cinc/.gitkeep
 !source_data/controls/state_capacity/.gitkeep
 !source_data/vdem/.gitkeep
+
+# -------------------------------------------------------------------------
+# READY_DATA -- allow final CSV exports to be committed
+# -------------------------------------------------------------------------
+!ready_data/
+!ready_data/.gitkeep
+!ready_data/*.csv
 
 # -------------------------------------------------------------------------
 # R-specific
