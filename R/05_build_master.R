@@ -43,7 +43,6 @@
 #   - Run this script after 00_packages.R and 01-04_* scripts have
 #     successfully produced all required .rds intermediates in data/.
 # =============================================================================
-
 source(here::here("R", "00_packages.R"))
 
 message("[05_build_master.R] Assembling GRAVE-D master dataset...")
@@ -51,9 +50,9 @@ message("[05_build_master.R] Assembling GRAVE-D master dataset...")
 # -------------------------------------------------------------------------
 # 1. LOAD INTERMEDIATE DATASETS
 # -------------------------------------------------------------------------
-spine_conflict <- readRDS(here("data", "spine_conflict.rds"))
-spine_ideology <- readRDS(here("data", "spine_ideology.rds"))
-spine_controls <- readRDS(here("data", "spine_controls.rds"))
+spine_conflict  <- readRDS(here("data", "spine_conflict.rds"))
+spine_ideology  <- readRDS(here("data", "spine_ideology.rds"))
+spine_controls  <- readRDS(here("data", "spine_controls.rds"))
 
 message("  Loaded: spine_conflict (", nrow(spine_conflict), " rows)")
 message("  Loaded: spine_ideology (", nrow(spine_ideology), " rows)")
@@ -90,17 +89,17 @@ if (length(new_control_cols) > 0) {
 # -------------------------------------------------------------------------
 # 4. VARIABLE ENGINEERING: DERIVED DYADIC VARIABLES
 # -------------------------------------------------------------------------
+# Check column availability before mutate (avoids . pronoun issues with |>)
+has_islm <- all(c("islmgenpct_a", "islmgenpct_b") %in% names(grave_d))
+has_chrst <- all(c("chrstgenpct_a", "chrstgenpct_b") %in% names(grave_d))
+
 grave_d <- grave_d |>
   mutate(
     mid_initiated = if_else(
       !is.na(hihosta) & hihosta >= 2, 1L, 0L
     ),
-    islm_dist = if (all(c("islmgenpct_a", "islmgenpct_b") %in% names(.))) {
-      abs(islmgenpct_a - islmgenpct_b)
-    } else NA_real_,
-    chrst_dist = if (all(c("chrstgenpct_a", "chrstgenpct_b") %in% names(.))) {
-      abs(chrstgenpct_a - chrstgenpct_b)
-    } else NA_real_
+    islm_dist = if (has_islm) abs(islmgenpct_a - islmgenpct_b) else NA_real_,
+    chrst_dist = if (has_chrst) abs(chrstgenpct_a - chrstgenpct_b) else NA_real_
   )
 
 # -------------------------------------------------------------------------
@@ -133,7 +132,7 @@ preferred_front <- c(
 
 all_cols <- names(grave_d)
 front_cols <- intersect(preferred_front, all_cols)
-rest_cols <- setdiff(all_cols, front_cols)
+rest_cols  <- setdiff(all_cols, front_cols)
 grave_d <- grave_d |> select(all_of(c(front_cols, rest_cols)))
 
 # -------------------------------------------------------------------------
