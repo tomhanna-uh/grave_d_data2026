@@ -1,0 +1,606 @@
+---
+title: "GRAVE-D Protocol Master Dyadic Codebook v2.0"
+project: "From Cooperation to Control: Authoritarian Leadership, Politics & International Conflict"
+dataset_structure: "Directed Dyad-Year (Country A → Country B)"
+unit_of_analysis: "The behavior of Sender (A) toward Target (B) in a given year."
+last_updated: "March 1, 2026"
+total_variables: 386
+author: 
+  - name: Tom Hanna
+    id: th
+    orcid: 0000-0002-8054-0335
+    email: tlhanna@central.uh.edu
+    url: tomhanna.me
+    affiliation: 
+      - name: University of Houston
+        city: Houston
+        state: TX
+        url: uh.edu/class/political-science/
+license: CC BY-NC-SA 4.0
+copyright: 
+  holder: Tom Hanna
+  year: 2026
+format:
+  docx:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    highlight-style: github
+    page-width: 6.5
+from: markdown-smart
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+knitr:
+  opts_chunk:
+    tidy: true
+    tidy.opts:
+      width.cutoff: 70
+---
+
+
+---
+
+## 1. Identification Variables
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 1 | COWcode_a | Correlates of War | Integer | Sender ID. The country initiating the action or the primary focus of the observation. Derived from iso3a in the FBIC spine. |
+| 2 | COWcode_b | Correlates of War | Integer | Target ID. The country receiving the action. Derived from iso3b in the FBIC spine. |
+| 3 | year | Various | Integer | Observation year (1946–2020). |
+| 4 | dyad | Calculated | Character | Undirected dyad identifier combining both COW codes. |
+| 5 | unregiona | UN GeoScheme | Character | Geographic region of Country A (Sender). |
+| 6 | unregionb | UN GeoScheme | Character | Geographic region of Country B (Target). |
+| 27 | iso3a | COW / countrycode | Character | ISO 3166-1 alpha-3 code for Country A. |
+| 28 | iso3b | COW / countrycode | Character | ISO 3166-1 alpha-3 code for Country B. |
+
+---
+
+## 2. FBIC Connectivity / Bandwidth (Dyadic Spine)
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 7 | bandwidth | FBIC | Continuous | Total Bandwidth. A composite index of total dyadic connectivity. Used to test the visibility of conflict signals. |
+| 8 | economicbandwidth | FBIC | Continuous | Economic Bandwidth. Aggregation of trade volume, FDI flows, and economic agreements. |
+| 9 | politicalbandwidth | FBIC | Continuous | Political Bandwidth. Measures diplomatic connectedness (embassy presence, shared IGO memberships). |
+| 10 | securitybandwidth | FBIC | Continuous | Security Bandwidth. Measures military-to-military ties, defense pacts, and arms trade volume. |
+
+> **Note:** `socialbandwidth` from v1.0 is not present in the final column list. If added in future versions it measures people-to-people exchanges, tourism, and migration flows.
+
+Source: Foreign Bilateral Integration Capacity (FBIC) Dataset. These variables form the spine of the dataset and measure the "width of the pipe" between nations.
+
+---
+
+## 3. Conflict & Targeting Outcomes
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 11 | hihosta | MIDs v4.0 | Integer | Hostility Level (Sender). Highest hostility reached by Country A against Country B in that year. Scale: 0=None, 1=Threat, 2=Display, 3=Use of Force, 4=War. |
+| 12 | mid_initiated | Calculated | Binary (0/1) | Conflict Initiation. Coded as 1 if hihosta ≥ 2. Indicates active revisionist behavior by the Sender. |
+| 13 | targets_democracy | GRAVE-D | Binary (0/1) | Democratic Target Selection. Coded as 1 if Country B's v2x_libdem_b ≥ 0.5. |
+| 14 | cold_war | Calculated | Binary (0/1) | Cold War period indicator. 1 if year is between 1947 and 1991 inclusive, 0 otherwise. |
+
+Source: Derived from MIDs v4.0, V-Dem, and GRAVE-D feature engineering.
+
+---
+
+## 4. Revisionism & Ideology: The Will to Fight
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 15 | rev_potential_a | Calculated | Continuous | Revisionist Potential (Sender). A standardized composite index measuring the structural drive to disrupt the status quo. Arithmetic mean of Z-scores for: (1) Ideological Legitimation (v2exl_legitideol_a), (2) Autocratic Control (inverse of v2x_libdem_a), (3) Ideological Extremity (ideol_extremity_a). |
+| 16 | rev_potential_b | Calculated | Continuous | Revisionist Potential (Target). Same construction as rev_potential_a, applied to Country B. |
+| 17 | revisionism_distance | Calculated | Continuous | Revisionism Gap. The absolute difference in revisionist potential between the dyad. Formula: abs(rev_potential_a − rev_potential_b). |
+| 18 | sidea_revisionist_domestic | V-Dem | Continuous | Domestic Revisionist Legitimation (Sender). Direct map from v2exl_legitideol_a. Higher values indicate stronger ideology-based legitimation. |
+| 19 | sidea_nationalist_revisionist_domestic | Planned | NA | Nationalist sub-type of domestic revisionism. Placeholder (NA) — requires Colgan/manual classification. |
+| 20 | sidea_socialist_revisionist_domestic | Planned | NA | Socialist sub-type. Placeholder (NA). |
+| 21 | sidea_religious_revisionist_domestic | Planned | NA | Religious sub-type. Placeholder (NA). |
+| 22 | sidea_reactionary_revisionist_domestic | Planned | NA | Reactionary sub-type. Placeholder (NA). |
+| 23 | sidea_separatist_revisionist_domestic | Planned | NA | Separatist sub-type. Placeholder (NA). |
+| 24 | sidea_dynamic_leader | V-Dem | Continuous | Personalist/charismatic leader legitimation (Sender). Direct map from v2exl_legitlead_a. |
+
+### 4a. Support Coalition Variables
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 25 | sidea_religious_support | Planned | NA | Religious support base. Placeholder (NA) — needs WRP or manual coding. |
+| 26 | sidea_party_elite_support | V-Dem | Continuous | Party/elite support (Sender). Power distributed by socioeconomic position. Maps from v2pepwrses_a. |
+| 370 | sidea_ethnic_racial_support | V-Dem | Continuous | Ethnic/racial support (Sender). Power distributed by social group. Maps from v2pepwrsoc_a. |
+| 371 | sidea_rural_worker_support | V-Dem | Continuous | Rural/worker support (Sender). Civil society participation. Maps from v2x_cspart_a. |
+| 372 | sidea_military_support | Planned | NA | Military support base. Placeholder (NA) — no direct V-Dem proxy. |
+| 373 | sidea_winning_coalition_size | V-Dem | Continuous | Winning coalition size proxy (Sender). Maps from v2dlreason_a (reasoned justification in deliberation). |
+
+### 4b. Revisionist Potential Components
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 376 | global_med_ideol | Calculated | Continuous | Annual global median of v2exl_legitideol_a. Computed within year groups. |
+| 377 | ideol_extremity_a | Calculated | Continuous | Ideological Extremity (Sender). abs(v2exl_legitideol_a − global_med_ideol). |
+| 378 | ideol_extremity_b | Calculated | Continuous | Ideological Extremity (Target). abs(v2exl_legitideol_b − global_med_ideol). |
+| 379 | dem_constraint_inv_a | Calculated | Continuous | Inverted Democratic Constraint (Sender). 1 − v2x_libdem_a. Higher = less constrained. |
+| 380 | dem_constraint_inv_b | Calculated | Continuous | Inverted Democratic Constraint (Target). 1 − v2x_libdem_b. |
+| 381 | z_legit_a | Calculated | Continuous | Z-score of v2exl_legitideol_a. |
+| 382 | z_dem_a | Calculated | Continuous | Z-score of dem_constraint_inv_a. |
+| 383 | z_ext_a | Calculated | Continuous | Z-score of ideol_extremity_a. |
+| 384 | z_legit_b | Calculated | Continuous | Z-score of v2exl_legitideol_b. |
+| 385 | z_dem_b | Calculated | Continuous | Z-score of dem_constraint_inv_b. |
+| 386 | z_ext_b | Calculated | Continuous | Z-score of ideol_extremity_b. |
+
+Source: Constructed in revisionist_potential logic (05_build_master.R) using V-Dem monadic inputs.
+
+---
+
+## 5. Temporal Controls
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 29 | peace_years | Calculated | Integer | Years since last MID onset in this dyad. |
+| 30 | t | Calculated | Integer | Linear time counter for peace-years spline (Carter & Signorino 2010). |
+| 31 | t2 | Calculated | Integer | Quadratic term: t². |
+| 32 | t3 | Calculated | Integer | Cubic term: t³. |
+
+---
+
+## 6. Leader Data: Archigos
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 33 | obsid | Archigos | Character | Unique leader-spell observation ID. |
+| 34 | leadid | Archigos | Character | Unique leader identifier (persistent across spells). |
+| 35 | idacr | Archigos | Character | Country acronym identifier. |
+| 36 | leader | Archigos | Character | Leader name. |
+| 37 | startdate | Archigos | Date | Start date of leader tenure. |
+| 38 | enddate | Archigos | Date | End date of leader tenure. |
+| 39 | entry | Archigos | Character | Mode of entry to office (e.g., Regular, Irregular, Foreign). |
+| 40 | exit | Archigos | Character | Mode of exit from office (e.g., Regular, Irregular, Death). |
+| 41 | exitcode | Archigos | Character | Detailed exit classification code. |
+| 42 | prevtimesinoffice | Archigos | Integer | Number of previous times this leader held office. |
+| 43 | posttenurefate | Archigos | Character | Fate of leader after leaving office (e.g., OK, Exile, Prison, Death). |
+| 44 | gender | Archigos | Character | Leader gender (M/F). |
+| 45 | yrborn | Archigos | Integer | Leader birth year. |
+| 46 | yrdied | Archigos | Integer | Leader death year (NA if still living). |
+| 47 | borndate | Archigos | Date | Leader birth date. |
+| 48 | deathdate | Archigos | Date | Leader death date (NA if still living). |
+| 49 | dbpedia.uri | Archigos | Character | DBpedia URI link for the leader. |
+| 50 | num.entry | Calculated | Integer | Numeric encoding of entry mode. |
+| 51 | num.exit | Calculated | Integer | Numeric encoding of exit mode. |
+| 52 | num.exitcode | Calculated | Integer | Numeric encoding of exit code. |
+| 53 | num.posttenurefate | Calculated | Integer | Numeric encoding of post-tenure fate. |
+
+Source: Archigos dataset (Goemans, Gleditsch & Chiozza). Merged in 03_build_grave_d_ideology.R.
+
+---
+
+## 7. Leader Data: Colgan Revolutionary Leaders
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 54 | fties | Colgan | Numeric | Foreign ties indicator. |
+| 55 | ftcur | Colgan | Numeric | Current foreign ties. |
+| 56 | stabb | Colgan | Character | State abbreviation (Colgan coding). |
+| 57 | onsets | Colgan | Integer | Count of MID onsets during leader tenure. |
+| 58 | revonsets | Colgan | Integer | Count of MID onsets by revolutionary leaders. |
+| 59 | sideaonsets | Colgan | Integer | Count of Side A (initiator) MID onsets. |
+| 60 | force_onsets | Colgan | Integer | Count of MID onsets involving use of force. |
+| 61 | force_revonsets | Colgan | Integer | Force onsets by revolutionary leaders. |
+| 62 | force_sideaonsets | Colgan | Integer | Force onsets where country was Side A. |
+| 63 | obsid_colgan | Colgan | Character | Colgan's leader-spell observation ID. |
+| 64 | ccname | Colgan | Character | Country name (Colgan coding). |
+| 65 | leader_colgan | Colgan | Character | Leader name (Colgan coding). |
+| 66 | startdate_colgan | Colgan | Date | Leader start date (Colgan). |
+| 67 | enddate_colgan | Colgan | Date | Leader end date (Colgan). |
+| 68 | entry_colgan | Colgan | Character | Mode of entry (Colgan coding). |
+| 69 | prevtimesinoffice_colgan | Colgan | Integer | Previous times in office (Colgan). |
+| 70 | posttenurefate_colgan | Colgan | Character | Post-tenure fate (Colgan). |
+| 71 | gender_colgan | Colgan | Character | Leader gender (Colgan). |
+| 72 | age0 | Colgan | Integer | Age at start of tenure. |
+| 73 | startobs | Colgan | Date/Integer | Start of observation window. |
+| 74 | endobs | Colgan | Date/Integer | End of observation window. |
+| 75 | age | Colgan | Integer | Leader age in observation year. |
+| 76 | numld | Colgan | Integer | Number of leaders in country-year. |
+| 77 | usedforce | Colgan | Binary (0/1) | Leader used military force during tenure. |
+| 78 | irregulartransition | Colgan | Binary (0/1) | Leader came to power via irregular transition. |
+| 79 | foundingleader | Colgan | Binary (0/1) | Leader is a founding leader of the state/regime. |
+| 80 | foreigninstall | Colgan | Binary (0/1) | Leader installed by a foreign power. |
+| 81 | radicalideology | Colgan | Binary (0/1) | Leader holds radical ideological orientation. |
+| 82 | democratizing | Colgan | Binary (0/1) | Country undergoing democratization during tenure. |
+| 83 | revolutionaryleader | Colgan | Binary (0/1) | Leader classified as revolutionary (Colgan definition). |
+| 84 | ambiguouscoding | Colgan | Binary (0/1) | Coding is ambiguous or disputed. |
+
+### 7a. Revolutionary Change Categories (Colgan)
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 85 | chg_executivepower | Colgan | Binary (0/1) | Revolutionary change in executive power structure. |
+| 86 | chg_politicalideology | Colgan | Binary (0/1) | Revolutionary change in political ideology. |
+| 87 | chg_nameofcountry | Colgan | Binary (0/1) | Country name changed during revolution. |
+| 88 | chg_propertyowernship | Colgan | Binary (0/1) | Revolutionary change in property ownership rules. |
+| 89 | chg_womenandethnicstatus | Colgan | Binary (0/1) | Revolutionary change in women's/ethnic group status. |
+| 90 | chg_religioningovernment | Colgan | Binary (0/1) | Revolutionary change in religion's role in government. |
+| 91 | chg_revolutionarycommittee | Colgan | Binary (0/1) | Revolutionary committee established. |
+| 92 | totalcategorieschanged | Colgan | Integer | Total count of revolutionary change categories (0–7). |
+| 93 | revage | Colgan | Integer | Years since revolution at observation. |
+| 94 | radrestrict | Colgan | Binary/Integer | Radical ideology with restricted coding. |
+
+Source: Colgan (2012) "Measuring Revolution" dataset. Merged in 03_build_grave_d_ideology.R.
+
+---
+
+## 8. Leader Ideology & Polity Controls
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 95 | start_year | Leader Ideology / Polity | Integer | Start year of leader or polity observation. |
+| 96 | code | Polity | Integer | Polity country code. |
+| 97 | democ | Polity | Integer | Polity democracy score (0–10). |
+| 98 | autoc | Polity | Integer | Polity autocracy score (0–10). |
+| 99 | polity2 | Polity | Integer | Combined Polity score (−10 to +10). democ − autoc, with special codes converted. |
+| 100 | durable | Polity | Integer | Regime durability. Years since last regime transition. |
+| 101 | polity | Polity | Integer | Raw Polity score before special code conversion. |
+| 102 | muslim | Leader Ideology | Continuous | Muslim population share (from leader ideology dataset). |
+| 103 | flgdpen | Leader Ideology | Continuous | Log GDP per capita (from leader ideology dataset). |
+| 104 | flethfrac | Leader Ideology | Continuous | Ethnic fractionalization index. |
+| 105 | region | Leader Ideology | Integer/Character | Regional classification. |
+| 106 | leg_british | Leader Ideology | Binary (0/1) | British legal tradition. |
+| 107 | leg_french | Leader Ideology | Binary (0/1) | French legal tradition. |
+| 108 | leg_socialist | Leader Ideology | Binary (0/1) | Socialist legal tradition. |
+| 109 | leg_german | Leader Ideology | Binary (0/1) | German legal tradition. |
+| 110 | leg_scandivanian | Leader Ideology | Binary (0/1) | Scandinavian legal tradition. |
+| 111 | borders | Leader Ideology | Integer | Number of land borders. |
+| 112 | tpop | Leader Ideology | Numeric | Total population (from leader ideology dataset). |
+| 113 | cinc | Leader Ideology | Continuous | CINC score (from leader ideology dataset, monadic). |
+| 114 | nonrevonsets | Leader Ideology | Integer | Non-revolutionary MID onsets. |
+| 115 | oecd | Leader Ideology | Binary (0/1) | OECD membership indicator. |
+| 116 | majorpower | Leader Ideology | Binary (0/1) | Major power status (COW definition). |
+| 117 | state_num | Leader Ideology | Integer | State number identifier. |
+| 118 | regnum | Leader Ideology | Integer | Regime number identifier. |
+| 119 | coldwar | Leader Ideology | Binary (0/1) | Cold War indicator (from leader ideology dataset). |
+| 120 | uniqtag | Leader Ideology | Character | Unique tag for leader-country-year. |
+| 121 | tenure | Leader Ideology | Integer | Leader tenure in years at observation. |
+| 122 | peaceyears | Leader Ideology | Integer | Peace years (from leader ideology dataset). |
+| 123 | entcat | Leader Ideology | Integer/Character | Entry category classification. |
+| 124 | entrc | Leader Ideology | Binary (0/1) | Entry via revolutionary change. |
+| 125 | entrcage | Leader Ideology | Integer | Age at revolutionary entry. |
+| 126 | entrc15 | Leader Ideology | Binary (0/1) | Revolutionary entry within 15 years. |
+| 127 | revstart | Leader Ideology | Integer | Year revolution started. |
+| 128 | durrc | Leader Ideology | Integer | Duration since revolutionary change. |
+| 129 | durrcage | Leader Ideology | Integer | Duration-age interaction for revolutionary change. |
+| 130 | durrc15 | Leader Ideology | Binary (0/1) | Revolutionary change within 15 years. |
+| 131 | dem | Leader Ideology | Binary (0/1) | Democracy indicator (from leader ideology dataset). |
+| 132 | seveninstitutionscoded | Leader Ideology | Binary (0/1) | All seven institutional categories coded. |
+
+Source: Global Leader Ideology dataset and Polity project. Merged in 03_build_grave_d_ideology.R.
+
+---
+
+## 9. V-Dem Indicators (Suffixed _a for Sender, _b for Target)
+
+All V-Dem variables are merged from the `vdemdata` R package in 04_build_controls.R. Each variable appears twice — once with `_a` suffix (Country A / Sender) and once with `_b` suffix (Country B / Target). Source: V-Dem v15 (Coppedge et al. 2025).
+
+### 9a. Democracy & Regime Indices
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 133/236 | v2x_polyarchy | 0–1 interval | Electoral Democracy Index. Measures the extent to which the ideal of electoral democracy is achieved. |
+| 134/237 | v2x_libdem | 0–1 interval | Liberal Democracy Index. Electoral democracy plus individual liberties and checks on executive power. |
+| 135/238 | v2x_partipdem | 0–1 interval | Participatory Democracy Index. Active citizen participation in political processes. |
+| 136/239 | v2x_delibdem | 0–1 interval | Deliberative Democracy Index. Public reasoning focused on the common good motivates political decisions. |
+| 137/240 | v2x_egaldem | 0–1 interval | Egalitarian Democracy Index. Rights, resources, and power distributed equally across social groups. |
+| 138/241 | v2x_regime | Ordinal 0–3 | Regimes of the World. 0=Closed autocracy, 1=Electoral autocracy, 2=Electoral democracy, 3=Liberal democracy. |
+| 139/242 | v2x_regime_amb | Ordinal 0–9 | Regimes of the World (Ambiguous). Finer-grained version with ambiguous categories between regime types. |
+
+### 9b. Executive Access & Structure
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 140/243 | v2x_ex_military | 0–1 interval | Military influence on executive. Degree to which the military controls executive appointment and policy. |
+| 141/244 | v2x_ex_confidence | 0–1 interval | Executive legitimacy via confidence. Legislature can remove executive via vote of no confidence. |
+| 142/245 | v2x_ex_direlect | 0–1 interval | Direct election of executive. Degree to which the executive is directly elected by popular vote. |
+| 143/246 | v2x_ex_hereditary | 0–1 interval | Hereditary executive. Degree to which executive selection is hereditary. |
+| 144/247 | v2x_ex_party | 0–1 interval | Party-based executive. Degree to which ruling party controls executive selection. |
+
+### 9c. Neopatrimonialism & Clientelism
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 145/248 | v2x_neopat | 0–1 interval | Neopatrimonialism Index. Extent to which the state apparatus is used for private gain. |
+| 146/249 | v2xnp_client | 0–1 interval | Clientelism Index. Extent of particularistic exchanges between politicians and voters. |
+
+### 9d. Civil Society & Deliberation
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 147/250 | v2x_frassoc_thick | 0–1 interval | Thick Freedom of Association. Robust associational environment beyond minimalist standards. |
+| 148/251 | v2x_cspart | 0–1 interval | Civil Society Participation Index. Are major CSOs consulted by policymakers; how large is public involvement in CSOs. |
+| 149/252 | v2dlreason | Interval | Reasoned Justification. Extent to which political elites give reasoned justification for positions. |
+| 150/253 | v2dlcommon | Interval | Common Good Justification. Extent to which elites justify positions in terms of the common good. |
+| 151/254 | v2dlcountr | Interval | Respect for Counterarguments. Extent to which elites acknowledge and respect opposing views. |
+| 152/255 | v2dlencmps | Interval | Particularistic vs. Public Goods. Whether policy outputs target narrow groups or provide public goods. |
+
+### 9e. Institutional Constraints
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 153/256 | v2x_jucon | 0–1 interval | Judicial Constraints on Executive. Extent to which the judiciary can constrain executive action. |
+| 154/257 | v2xlg_legcon | 0–1 interval | Legislative Constraints on Executive. Extent to which the legislature can question, investigate, and oversee the executive. |
+| 155/258 | v2juhcind | Interval | High Court Independence. Independence of the highest court from executive influence. |
+| 156/259 | v2juncind | Interval | Lower Court Independence. Independence of lower courts from executive influence. |
+| 157/260 | v2juhccomp | Interval | High Court Compliance. Extent to which the government complies with high court decisions. |
+| 158/261 | v2jucomp | Interval | Compliance with Judiciary. General government compliance with judicial decisions. |
+| 159/262 | v2jureview | Interval | Judicial Review. Extent to which courts can invalidate unconstitutional government actions. |
+
+### 9f. Corruption, Rule of Law & Civil Liberties
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 160/263 | v2x_corr | 0–1 interval | Political Corruption Index. Higher values = more corruption. |
+| 161/264 | v2x_rule | 0–1 interval | Rule of Law Index. Transparency, predictability, and equality of law enforcement. |
+| 162/265 | v2xcl_prpty | Interval | Property Rights. Government respect for property rights. |
+| 163/266 | v2x_gencl | 0–1 interval | General Civil Liberties Index. |
+| 164/267 | v2x_clpol | 0–1 interval | Political Civil Liberties. Freedom of political expression and association. |
+| 165/268 | v2x_clpriv | 0–1 interval | Private Civil Liberties. Freedom of movement, religion, property. |
+| 166/269 | v2xcs_ccsi | 0–1 interval | Core Civil Society Index. CSO autonomy and citizen engagement. |
+
+### 9g. Legislature
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 167/270 | v2lgoppart | Interval | Legislature Opposition Parties. Ability of opposition parties to exercise oversight. |
+
+### 9h. State Capacity & Territory
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 168/271 | v2stfisccap | Interval | State Fiscal Capacity. Government ability to tax and spend effectively. |
+| 169/272 | v2svstterr | Interval | State Authority over Territory. Extent of effective government control over sovereign territory. |
+
+### 9i. Media
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 170/273 | v2mecenefi | Interval | Government Censorship Effort — Internet. Extent of government effort to censor online media. |
+| 171/274 | v2mecenefm | Interval | Government Censorship Effort — Media. Extent of government effort to censor print/broadcast media. |
+
+### 9j. Ideology-Based Legitimation
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 172/275 | v2exl_legitideol | Interval | Ideological Legitimation. To what extent does the leader justify their rule using ideology? Base variable for rev_potential. |
+| 173/276 | v2exl_legitperf | Interval | Performance Legitimation. Leader justifies rule through economic or governance performance. |
+| 174/277 | v2exl_legitlead | Interval | Personalist/Charismatic Legitimation. Leader justifies rule through personal charisma or personality cult. |
+| 175/278 | v2exl_legitratio | Interval | Rational-Legal Legitimation. Leader justifies rule through established legal/procedural norms. |
+
+### 9k. Ideology Type Scores
+
+These are continuous latent variable scores measuring the extent to which each ideology type is used for regime legitimation. Produced by V-Dem's Bayesian item response theory measurement model. Higher values indicate greater reliance on that ideology type. Source: V-Dem v15, variable v2exl_legitideolcr.
+
+| # (a/b) | Variable stem | Description |
+|---------|--------------|-------------|
+| 176/279 | v2exl_legitideolcr_0 | Nationalist ideology. Appeals to nationalism, national greatness, or ethnic/cultural identity as the basis for regime legitimation. |
+| 177/280 | v2exl_legitideolcr_1 | Socialist or communist ideology. Appeals to Marxism-Leninism, socialism, or class-based revolutionary ideology. |
+| 178/281 | v2exl_legitideolcr_2 | Restorative or conservative ideology. Appeals to restoring a previous political order or preserving the status quo. |
+| 179/282 | v2exl_legitideolcr_3 | Separatist or autonomist ideology. Appeals to self-determination, regional independence, or political autonomy from a larger state or imperial structure. |
+| 180/283 | v2exl_legitideolcr_4 | Religious ideology. Appeals to religious doctrine, divine authority, or theocratic governance. |
+
+
+### 9l. Power Distribution
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 181/284 | v2pepwrses | Interval | Power Distributed by Socioeconomic Position. Wealthy vs. poor influence on politics. |
+| 182/285 | v2pepwrsoc | Interval | Power Distributed by Social Group. Dominant vs. marginalized group political influence. |
+| 183/286 | v2xpe_exlsocgr | Interval | Exclusion by Social Group Index. Degree of political exclusion by social identity. |
+
+### 9m. Head of State / Government
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 184/287 | v2exhoshog | Binary 0/1 | HOS = HOG. Is the Head of State also Head of Government? |
+| 185/288 | v2exremhog | Interval | HOG Removal by Legislature. Could the legislature successfully remove the HOG? |
+| 186/289 | v2exdjdshg | Interval | HOG Dissolution Power. Could the HOG dissolve the legislature? |
+| 187/290 | v2exdfvthg | Interval | HOG Veto Power. Could the HOG successfully veto legislation? |
+
+### 9n. Regime Support Groups Scale
+
+Each variable indicates the importance that the regime relies on a particular support group. Source: V-Dem Regime survey.
+
+| # (a/b) | Variable stem | Group |
+|---------|--------------|-------|
+| 188/291 | v2regsupgroups_0 | Aristocracy / hereditary elites |
+| 189/292 | v2regsupgroups_1 | Agrarian elites / large landholders |
+| 190/293 | v2regsupgroups_2 | Party elites |
+| 191/294 | v2regsupgroups_3 | Business elites |
+| 192/295 | v2regsupgroups_4 | State bureaucracy / civil servants |
+| 193/296 | v2regsupgroups_5 | Military |
+| 194/297 | v2regsupgroups_6 | Ethnic or racial group |
+| 195/298 | v2regsupgroups_7 | Religious group |
+| 196/299 | v2regsupgroups_8 | Local elites / chiefs |
+| 197/300 | v2regsupgroups_9 | Urban working classes / labor unions |
+| 198/301 | v2regsupgroups_10 | Urban middle classes |
+| 199/302 | v2regsupgroups_11 | Rural working classes / peasants |
+| 200/303 | v2regsupgroups_12 | Rural middle classes / family farmers |
+| 201/304 | v2regsupgroups_13 | Foreign government / colonial power |
+
+### 9o. Regime Support Metadata
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 202/305 | v2regsupgroupssize | Interval | Total size of regime support base (% of adult population). |
+| 203/306 | v2regimpgroup | Nominal 0–13 | Most important support group (mode of coder responses). Maps to v2regsupgroups categories. |
+| 204/307 | v2reginfo | Text/Nominal | Regime name and start/end dates (pre-coded identifier). |
+| 205/308 | v2regint | Binary 0/1 | Regime information available. 0 = no regime information for this country-date. |
+| 206/309 | v2regendtype | Ordinal 0–7 | Regime End Type. 0=Military coup, 1=Other coup, 2=Self-coup, 3=Assassination, 4=Natural death, 5=Resignation, 6=Institutional change, 7=Foreign intervention. |
+
+### 9p. HOG Removal Scale (0–8)
+
+Influence that each body has on  successfully removing the Head of Government.
+
+| # (a/b) | Variable stem | Body |
+|---------|--------------|------|
+| 207/310 | v2exrmhgnp_0 | None |
+| 208/311 | v2exrmhgnp_1 | Foreign power |
+| 209/312 | v2exrmhgnp_2 | Ruling party leadership |
+| 210/313 | v2exrmhgnp_3 | Royal council |
+| 211/314 | v2exrmhgnp_4 | Military |
+| 212/315 | v2exrmhgnp_5 | Head of State |
+| 213/316 | v2exrmhgnp_6 | Religious body |
+| 214/317 | v2exrmhgnp_7 | Tribal or ethnic council |
+| 215/318 | v2exrmhgnp_8 | Other |
+
+### 9q. HOG Control / Approval Scale (0–8)
+
+Scale of HOG seeks prior approval from each body for domestic policy.
+
+| # (a/b) | Variable stem | Body |
+|---------|--------------|------|
+| 216/319 | v2exctlhg_0 | None |
+| 217/320 | v2exctlhg_1 | Foreign power |
+| 218/321 | v2exctlhg_2 | Ruling party leadership |
+| 219/322 | v2exctlhg_3 | Royal council |
+| 220/323 | v2exctlhg_4 | Military |
+| 221/324 | v2exctlhg_5 | Head of State |
+| 222/325 | v2exctlhg_6 | Religious body |
+| 223/326 | v2exctlhg_7 | Tribal or ethnic council |
+| 224/327 | v2exctlhg_8 | Other |
+
+### 9r. V-Dem Economic & Social Variables (e_ prefix)
+
+These are external variables distributed with V-Dem. Names may vary across vdemdata package versions.
+
+| # (a/b) | Variable stem | Scale | Description |
+|---------|--------------|-------|-------------|
+| 225/328 | epop | Numeric | Population (thousands). Current V-Dem name; formerly e_mipopula. |
+| 226/329 | e_cow_exports | Numeric | COW Exports. Total national exports in current dollars (COW trade data). |
+| 227/330 | e_cow_imports | Numeric | COW Imports. Total national imports in current dollars (COW trade data). |
+| 228/331 | e_total_fuel_income_pc | Numeric | Total Fuel Income Per Capita. Oil, gas, and coal income per capita (constant USD). |
+| 229/332 | e_total_oil_income_pc | Numeric | Total Oil Income Per Capita. Oil-only income per capita (constant USD). |
+| 230/333 | e_miurbani | Numeric | Urbanization. Percentage of population in urban areas. May be absent in newer vdemdata versions. |
+| 231/334 | e_civil_war | Binary (0/1) | Civil War. Indicator for ongoing civil war in that country-year. |
+| 232/335 | e_miinteco | Ordinal | Interstate Conflict Status. Level of interstate military conflict involvement. |
+| 233/336 | e_legparty | Ordinal | Legal Parties. Number/status of legal political parties. |
+| 234/337 | e_autoc | Numeric | Autocracy indicator (external to V-Dem, distributed with dataset). |
+| 235/338 | e_peaveduc | Numeric | Average Education. Average years of education in the adult population. |
+
+---
+
+## 10. Material Capabilities (CINC)
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 339 | cinc_a | COW NMC | Continuous | Composite Index of National Capability (Sender). Aggregates military expenditure, military personnel, energy consumption, iron/steel production, urban population, and total population. Scale: 0–1 (share of global capabilities). |
+| 340 | cinc_b | COW NMC | Continuous | Composite Index of National Capability (Target). Same construction as cinc_a. |
+
+Source: COW National Material Capabilities v5+. Merged in 04_build_controls.R.
+
+---
+
+## 11. Alliance Data (ATOP)
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 341 | ddyad | ATOP v5.1 | Integer | ATOP directed dyad identifier. |
+| 342 | atopally | ATOP v5.1 | Binary (0/1) | Any active alliance in this dyad-year. |
+| 343 | defense | ATOP v5.1 | Binary (0/1) | Active defense pact. Signatories obliged to intervene militarily if partner attacked. |
+| 344 | offense | ATOP v5.1 | Binary (0/1) | Active offense pact. Signatories obliged to cooperate in aggressive military action. |
+| 345 | neutral | ATOP v5.1 | Binary (0/1) | Active neutrality pact. |
+| 346 | nonagg | ATOP v5.1 | Binary (0/1) | Active non-aggression pact. |
+| 347 | consul | ATOP v5.1 | Binary (0/1) | Active consultation pact. Obligation to consult in times of crisis. |
+| 348 | shareob | ATOP v5.1 | Binary (0/1) | Shared obligations beyond the five core types. |
+| 349 | transyr | ATOP v5.1 | Integer | Year of alliance transition (formation, termination, or change). |
+| 350 | bilatno | ATOP v5.1 | Integer | Bilateral alliance count. Number of bilateral alliances active in this dyad-year. |
+| 351 | multino | ATOP v5.1 | Integer | Multilateral alliance count. Number of multilateral alliances active in this dyad-year. |
+| 352 | number | ATOP v5.1 | Integer | Total alliance count. |
+| 353 | asymm | ATOP v5.1 | Binary (0/1) | Asymmetric obligations. Alliance imposes different obligations on the two parties. |
+| 354–360 | atopid1–atopid7 | ATOP v5.1 | Integer | Alliance treaty identifiers. ATOP numeric IDs for up to 7 concurrent active alliances. |
+| 361 | version | ATOP v5.1 | Character/Numeric | ATOP dataset version number. |
+
+Source: Alliance Treaty Obligations and Provisions v5.1 (Leeds et al.). Merged in 04_build_controls.R as directed dyad-year.
+
+---
+
+## 12. Religious Demographics (WRP)
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 362 | chrstgenpct_a | WRP | Continuous (0–100) | Christian Percentage (Sender). Total percentage of Christian adherents. |
+| 363 | islmgenpct_a | WRP | Continuous (0–100) | Muslim Percentage (Sender). Total percentage of Muslim adherents. |
+| 364 | budgenpct_a | WRP | Continuous (0–100) | Buddhist Percentage (Sender). |
+| 365 | hindgenpct_a | WRP | Continuous (0–100) | Hindu Percentage (Sender). |
+| 366 | chrstgenpct_b | WRP | Continuous (0–100) | Christian Percentage (Target). |
+| 367 | islmgenpct_b | WRP | Continuous (0–100) | Muslim Percentage (Target). |
+| 368 | budgenpct_b | WRP | Continuous (0–100) | Buddhist Percentage (Target). |
+| 369 | hindgenpct_b | WRP | Continuous (0–100) | Hindu Percentage (Target). |
+
+### 12a. Religious Distance (Calculated)
+
+| # | Variable | Source | Type | Description |
+|---|----------|--------|------|-------------|
+| 374 | islm_dist | Calculated | Continuous | Islamic Distance. abs(islmgenpct_a − islmgenpct_b). Difference in Muslim population share between the dyad. |
+| 375 | chrst_dist | Calculated | Continuous | Christian Distance. abs(chrstgenpct_a − chrstgenpct_b). Difference in Christian population share. |
+
+Source: COW World Religion Project (Maoz & Henderson 2013). WRP data is released in 5-year intervals (1945–2010). Interpolation and imputation strategies as described in the GRAVE-M codebook. Merged in 04_build_controls.R.
+
+---
+
+## Appendix A: Variable Count Summary
+
+| Section | Variables | Count |
+|---------|-----------|-------|
+| 1. Identification | COWcode_a/b, year, dyad, unregion, iso3 | 8 |
+| 2. FBIC Bandwidth | bandwidth, economic/political/security | 4 |
+| 3. Conflict & Targeting | hihosta, mid_initiated, targets_democracy, cold_war | 4 |
+| 4. Revisionism & Ideology | rev_potential, sidea_*, z-scores, components | 28 |
+| 5. Temporal Controls | peace_years, t, t², t³ | 4 |
+| 6. Archigos Leaders | obsid through dbpedia.uri | 21 |
+| 7. Colgan Leaders | fties through seveninstitutionscoded | 79 |
+| 8. Leader Ideology & Polity | start_year through seveninstitutionscoded | 38 |
+| 9. V-Dem (×2 sides) | v2x_polyarchy through e_peaveduc (×2) | 206 |
+| 10. CINC | cinc_a, cinc_b | 2 |
+| 11. ATOP Alliances | ddyad through version | 21 |
+| 12. Religion (WRP) | chrstgenpct through chrst_dist | 10 |
+| **Total** | | **386** |
+
+---
+
+## Appendix B: Data Sources
+
+| Source | Citation | URL |
+|--------|----------|-----|
+| FBIC | Kadera & Sorokin | — |
+| MIDs v4.0 | Palmer et al. (2022) | correlatesofwar.org |
+| V-Dem v15 | Coppedge et al. (2025) | v-dem.net |
+| Archigos | Goemans, Gleditsch & Chiozza | archigos.org |
+| Colgan | Colgan (2012) "Measuring Revolution" | — |
+| Global Leader Ideology | — | — |
+| Polity | Marshall & Gurr | systemicpeace.org |
+| COW NMC | Singer, Bremer & Stuckey | correlatesofwar.org |
+| ATOP v5.1 | Leeds et al. | atop-data.com |
+| WRP | Maoz & Henderson (2013) | correlatesofwar.org |
+| FUVF | Caprioli & Trumbore | d.umn.edu/~mcapriol/ |
+| countrycode | Arel-Bundock | CRAN |
+
+---
+
+## Appendix C: Processing Notes
+
+1. **Directed dyad structure.** All monadic variables (V-Dem, CINC, WRP, Archigos, leader data) are merged twice: once for Side A (Sender, `_a` suffix) and once for Side B (Target, `_b` suffix).
+
+2. **V-Dem version handling.** The pipeline uses `any_of()` in the V-Dem `select()` call to handle variable name changes across vdemdata package versions. Old names (`e_migdppc`, `e_mipopula`) are harmonized to current names (`egdppc`, `epop`) post-select.
+
+3. **WRP interpolation.** WRP data is released at 5-year intervals. Intervening years use linear interpolation; post-2010 years use Last Observation Carried Forward (LOCF).
+
+4. **Revisionist potential.** Constructed from three Z-score-standardized components: ideological legitimation (`v2exl_legitideol`), inverted liberal democracy (`1 − v2x_libdem`), and ideological extremity (distance from annual global median). The composite is the arithmetic mean of the three Z-scores.
+
+5. **Placeholder variables.** Several `sidea_*` sub-type variables (nationalist, socialist, religious, reactionary, separatist revisionism; military support; religious support) are currently coded as `NA_real_`. These require supplementary coding from Colgan classification or manual expert coding.
+
+6. **Pipeline scripts.**
+   - `01_build_fbic_spine.R` — FBIC bandwidth spine
+   - `02_build_conflict.R` — MID conflict variables
+   - `03_build_grave_d_ideology.R` — Archigos, Colgan, leader ideology
+   - `04_build_controls.R` — V-Dem, CINC, ATOP, WRP, FUVF, economic controls
+   - `05_build_master.R` — merge, revisionist potential, derived variables, export
+
+
+
