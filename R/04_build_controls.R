@@ -6,6 +6,7 @@
 #         source_data/atop/                (ATOP alliance data)
 #         source_data/controls/cinc/       (CINC / National Material Capabilities)
 #         source_data/cow/WRP_national.csv (COW World Religions)
+#         source_data/mids/                (First Use of Violent Force - FUVF)
 #         source_data/econ/ross_oil_gas/   (Ross oil and gas)
 #         source_data/econ/maddison/       (Maddison GDP data)
 #         source_data/econ/swiid/          (SWIID inequality)
@@ -24,85 +25,144 @@ message(sprintf("[04] Loaded spine_ideology: %d rows", nrow(spine)))
 # -----------------------------------------------------------------------------
 # 1. V-Dem (via R package, not flat file)
 # -----------------------------------------------------------------------------
-# V-Dem data is accessed via the vdemdata R package. If the package is not
-# installed, this section is skipped and V-Dem variables will be absent.
-
 if (requireNamespace("vdemdata", quietly = TRUE)) {
-  message("[04] Loading V-Dem from vdemdata package...")
-  vdem_data <- vdemdata::vdem |>
-    as_tibble() |>
-    select(
-      COWcode = COWcode, year = year,
-      v2x_libdem, v2x_corr,
-      v2exl_legitideol, v2exl_legitperf, v2exl_legitlead,
-      v2exl_legitratio, v2x_polyarchy,
-      v2pepwrses, v2pepwrsoc, v2x_cspart,
-      v2dlreason, v2dlcommon, v2dlcountr
-    ) |>
-    filter(!is.na(COWcode))
-  message(sprintf("[04] V-Dem: %d country-year rows", nrow(vdem_data)))
+        message("[04] Loading V-Dem from vdemdata package...")
+        
+        # Use any_of() throughout so the script survives version differences
+        vdem_core <- c(
+                "COWcode", "year",
+                # Democracy & regime indices
+                "v2x_polyarchy", "v2x_libdem", "v2x_partipdem", "v2x_delibdem",
+                "v2x_egaldem", "v2x_regime", "v2x_regime_amb",
+                # Executive access & type
+                "v2x_ex_military", "v2x_ex_confidence", "v2x_ex_direlect",
+                "v2x_ex_hereditary", "v2x_ex_party",
+                # Neopatrimonialism & clientelism
+                "v2x_neopat", "v2xnp_client",
+                # Civil society & deliberation
+                "v2x_frassoc_thick", "v2x_cspart",
+                "v2dlreason", "v2dlcommon", "v2dlcountr", "v2dlencmps",
+                # Constraints
+                "v2x_jucon", "v2xlg_legcon",
+                "v2juhcind", "v2juncind", "v2juhccomp", "v2jucomp", "v2jureview",
+                # Corruption & rule of law
+                "v2x_corr", "v2x_rule", "v2xcl_prpty", "v2x_gencl",
+                "v2x_clpol", "v2x_clpriv", "v2xcs_ccsi",
+                # Legislature
+                "v2lgoppart",
+                # State capacity & territory
+                "v2stfisccap", "v2svstterr",
+                # Media
+                "v2mecenefi", "v2mecenefm",
+                # Ideology legitimation (continuous)
+                "v2exl_legitideol", "v2exl_legitperf", "v2exl_legitlead",
+                "v2exl_legitratio",
+                # Ideology type categorical probabilities (0-4)
+                "v2exl_legitideolcr_0", "v2exl_legitideolcr_1", "v2exl_legitideolcr_2",
+                "v2exl_legitideolcr_3", "v2exl_legitideolcr_4",
+                # Power distribution by social group
+                "v2pepwrses", "v2pepwrsoc", "v2xpe_exlsocgr",
+                # Head of government
+                "v2exhoshog", "v2exremhog", "v2exdjdshg", "v2exdfvthg",
+                # Regime support groups (categorical probabilities 0-13)
+                "v2regsupgroups_0", "v2regsupgroups_1", "v2regsupgroups_2",
+                "v2regsupgroups_3", "v2regsupgroups_4", "v2regsupgroups_5",
+                "v2regsupgroups_6", "v2regsupgroups_7", "v2regsupgroups_8",
+                "v2regsupgroups_9", "v2regsupgroups_10", "v2regsupgroups_11",
+                "v2regsupgroups_12", "v2regsupgroups_13",
+                "v2regsupgroupssize", "v2regimpgroup",
+                "v2reginfo", "v2regint", "v2regendtype",
+                # HOG removal probabilities (0-8)
+                "v2exrmhgnp_0", "v2exrmhgnp_1", "v2exrmhgnp_2", "v2exrmhgnp_3",
+                "v2exrmhgnp_4", "v2exrmhgnp_5", "v2exrmhgnp_6", "v2exrmhgnp_7",
+                "v2exrmhgnp_8",
+                # HOG control probabilities (0-8)
+                "v2exctlhg_0", "v2exctlhg_1", "v2exctlhg_2", "v2exctlhg_3",
+                "v2exctlhg_4", "v2exctlhg_5", "v2exctlhg_6", "v2exctlhg_7",
+                "v2exctlhg_8",
+                # Economic & social (e_ variables) -- names vary by vdemdata version
+                # v12+: egdppc, epop  |  older: e_migdppc, e_mipopula
+                "egdppc", "epop",                         # v12+ names
+                "e_migdppc", "e_mipopula",                # older names (any_of handles both)
+                "e_cow_exports", "e_cow_imports",
+                "e_total_fuel_income_pc", "e_total_oil_income_pc",
+                "e_miurbani", "e_civil_war", "e_miinteco",
+                "e_legparty", "e_autoc", "e_peaveduc"
+        )
+        
+        vdem_data <- vdemdata::vdem |>
+                as_tibble() |>
+                select(any_of(vdem_core)) |>
+                filter(!is.na(COWcode))
+        
+        # Harmonise to current V-Dem names (v12+)
+        if ("e_migdppc" %in% names(vdem_data) && !"egdppc" %in% names(vdem_data)) {
+                vdem_data <- vdem_data |> rename(egdppc = e_migdppc)
+        }
+        if ("e_mipopula" %in% names(vdem_data) && !"epop" %in% names(vdem_data)) {
+                vdem_data <- vdem_data |> rename(epop = e_mipopula)
+        }
+        
+        message(sprintf("[04] V-Dem: %d country-year rows, %d columns",
+                        nrow(vdem_data), ncol(vdem_data)))
 } else {
-  warning("[04] vdemdata package not installed. V-Dem variables will be absent.")
-  vdem_data <- NULL
+        warning("[04] vdemdata package not installed. V-Dem variables will be absent.")
+        vdem_data <- NULL
 }
 
 # -----------------------------------------------------------------------------
 # 2. CINC (National Material Capabilities)
 # -----------------------------------------------------------------------------
 cinc_files <- list.files(
-  here("source_data", "controls", "cinc"),
-  pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
+        here("source_data", "controls", "cinc"),
+        pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
 )
 if (length(cinc_files) > 0) {
-  message(sprintf("[04] Found CINC file: %s", cinc_files[1]))
-  if (grepl("\\.csv$", cinc_files[1])) {
-    cinc_data <- as_tibble(data.table::fread(cinc_files[1]))
-  } else {
-    cinc_data <- haven::read_dta(cinc_files[1])
-  }
-  cinc_data <- cinc_data |> rename_with(tolower)
-  if ("ccode" %in% names(cinc_data)) cinc_data <- cinc_data |> rename(COWcode = ccode)
-  if ("cowcode" %in% names(cinc_data)) cinc_data <- cinc_data |> rename(COWcode = cowcode)
-  cinc_data <- cinc_data |> select(COWcode, year, cinc) |> filter(!is.na(cinc))
-  message(sprintf("[04] CINC: %d country-year rows", nrow(cinc_data)))
+        message(sprintf("[04] Found CINC file: %s", cinc_files[1]))
+        if (grepl("\\.csv$", cinc_files[1])) {
+                cinc_data <- as_tibble(data.table::fread(cinc_files[1]))
+        } else {
+                cinc_data <- haven::read_dta(cinc_files[1])
+        }
+        cinc_data <- cinc_data |> rename_with(tolower)
+        if ("ccode"   %in% names(cinc_data)) cinc_data <- cinc_data |> rename(COWcode = ccode)
+        if ("cowcode" %in% names(cinc_data)) cinc_data <- cinc_data |> rename(COWcode = cowcode)
+        cinc_data <- cinc_data |> select(COWcode, year, cinc) |> filter(!is.na(cinc))
+        message(sprintf("[04] CINC: %d country-year rows", nrow(cinc_data)))
 } else {
-  warning("[04] No CINC file found in source_data/controls/cinc/")
-  cinc_data <- NULL
+        warning("[04] No CINC file found in source_data/controls/cinc/")
+        cinc_data <- NULL
 }
 
 # -----------------------------------------------------------------------------
 # 3. ATOP (Alliance Treaty Obligations and Provisions)
 # -----------------------------------------------------------------------------
-# Expected file: atop5_1ddyr_NNA.csv (directed dyad-year, non-missing)
 atop_path <- here("source_data", "atop", "atop5_1ddyr_NNA.csv")
 if (file.exists(atop_path)) {
-  atop_data <- as_tibble(data.table::fread(atop_path)) |>
-    rename_with(tolower)
-  # ATOP ddyr uses statea/stateb (COW codes) + year
-  # Rename to match spine keys for merge in section 6c
-  if (all(c("statea", "stateb", "year") %in% names(atop_data))) {
-    atop_data <- atop_data |>
-      rename(COWcode_a = statea, COWcode_b = stateb)
-  }
-  message(sprintf("[04] ATOP: %d rows x %d cols", nrow(atop_data), ncol(atop_data)))
+        atop_data <- as_tibble(data.table::fread(atop_path)) |>
+                rename_with(tolower)
+        if (all(c("statea", "stateb", "year") %in% names(atop_data))) {
+                atop_data <- atop_data |>
+                        rename(COWcode_a = statea, COWcode_b = stateb)
+        }
+        message(sprintf("[04] ATOP: %d rows x %d cols", nrow(atop_data), ncol(atop_data)))
 } else {
-  # Fallback: try any CSV/DTA in source_data/atop/
-  atop_files <- list.files(
-    here("source_data", "atop"),
-    pattern = ".*ddyr.*\\.csv$", full.names = TRUE, ignore.case = TRUE
-  )
-  if (length(atop_files) > 0) {
-    atop_data <- as_tibble(data.table::fread(atop_files[1])) |>
-      rename_with(tolower)
-    if (all(c("statea", "stateb", "year") %in% names(atop_data))) {
-      atop_data <- atop_data |>
-        rename(COWcode_a = statea, COWcode_b = stateb)
-    }
-    message(sprintf("[04] ATOP (fallback): %s | %d rows", basename(atop_files[1]), nrow(atop_data)))
-  } else {
-    warning("[04] atop5_1ddyr_NNA.csv not found in source_data/atop/")
-    atop_data <- NULL
-  }
+        atop_files <- list.files(
+                here("source_data", "atop"),
+                pattern = ".*ddyr.*\\.csv$", full.names = TRUE, ignore.case = TRUE
+        )
+        if (length(atop_files) > 0) {
+                atop_data <- as_tibble(data.table::fread(atop_files[1])) |>
+                        rename_with(tolower)
+                if (all(c("statea", "stateb", "year") %in% names(atop_data))) {
+                        atop_data <- atop_data |>
+                                rename(COWcode_a = statea, COWcode_b = stateb)
+                }
+                message(sprintf("[04] ATOP (fallback): %s | %d rows", basename(atop_files[1]), nrow(atop_data)))
+        } else {
+                warning("[04] atop5_1ddyr_NNA.csv not found in source_data/atop/")
+                atop_data <- NULL
+        }
 }
 
 # -----------------------------------------------------------------------------
@@ -110,294 +170,295 @@ if (file.exists(atop_path)) {
 # -----------------------------------------------------------------------------
 wrp_path <- here("source_data", "cow", "WRP_national.csv")
 if (file.exists(wrp_path)) {
-  wrp_data <- as_tibble(data.table::fread(wrp_path)) |> rename_with(tolower)
-  if ("ccode" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = ccode)
-  if ("cowcode" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = cowcode)
-    if ("state" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = state)
-  message(sprintf("[04] WRP religions: %d rows", nrow(wrp_data)))
+        wrp_data <- as_tibble(data.table::fread(wrp_path)) |> rename_with(tolower)
+        if ("ccode"   %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = ccode)
+        if ("cowcode" %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = cowcode)
+        if ("state"   %in% names(wrp_data)) wrp_data <- wrp_data |> rename(COWcode = state)
+        message(sprintf("[04] WRP religions: %d rows", nrow(wrp_data)))
 } else {
-  warning("[04] WRP_national.csv not found in source_data/cow/")
-  wrp_data <- NULL
+        warning("[04] WRP_national.csv not found in source_data/cow/")
+        wrp_data <- NULL
 }
 
 # -----------------------------------------------------------------------------
-# 5. Economic controls (source_data/econ/ subdirectories)
+# 5. First Use of Violent Force (FUVF) - Caprioli & Trumbore
+# -----------------------------------------------------------------------------
+# Expected file: FUFv1.10.csv (or similar) in source_data/mids/
+# Key variables: fuf (1 = first user of violent force), fufyear, fufjoin, midjoin
+# Unit: country-year (initiator == 1 rows only in original; we keep all and
+#        create a binary indicator for merge onto dyadic spine)
+fuvf_files <- list.files(
+        here("source_data", "mids"),
+        pattern = ".*FUF.*\\.csv$", full.names = TRUE, ignore.case = TRUE
+)
+if (length(fuvf_files) > 0) {
+        message(sprintf("[04] Found FUVF file: %s", fuvf_files[1]))
+        fuvf_data <- as_tibble(data.table::fread(fuvf_files[1])) |>
+                rename_with(tolower)
+        # Standardise country code column
+        if ("ccode"   %in% names(fuvf_data)) fuvf_data <- fuvf_data |> rename(COWcode = ccode)
+        if ("cowcode" %in% names(fuvf_data)) fuvf_data <- fuvf_data |> rename(COWcode = cowcode)
+        # Standardise year column
+        if ("fufyear" %in% names(fuvf_data) && !"year" %in% names(fuvf_data)) {
+                fuvf_data <- fuvf_data |> rename(year = fufyear)
+        }
+        # Create binary initiator flag and retain useful columns
+        fuvf_data <- fuvf_data |>
+                mutate(fuf_initiator = if_else(!is.na(fuf) & fuf == 1, 1L, 0L)) |>
+                select(COWcode, year, fuf_initiator,
+                       any_of(c("fuf", "endate", "fufjoin", "midjoin"))) |>
+                filter(!is.na(COWcode), !is.na(year)) |>
+                distinct(COWcode, year, .keep_all = TRUE)
+        message(sprintf("[04] FUVF: %d country-year rows", nrow(fuvf_data)))
+} else {
+        warning("[04] No FUVF file found in source_data/mids/. Expected FUFv1.10.csv or similar.")
+        fuvf_data <- NULL
+}
+
+# -----------------------------------------------------------------------------
+# 6. Economic controls (source_data/econ/ subdirectories)
 # -----------------------------------------------------------------------------
 
-# 5a. Ross oil and gas
+# 6a. Ross oil and gas
 ross_files <- list.files(
-  here("source_data", "econ", "ross_oil_gas"),
-  pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
+        here("source_data", "econ", "ross_oil_gas"),
+        pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
 )
 if (length(ross_files) > 0) {
-  message(sprintf("[04] Found Ross file: %s", ross_files[1]))
-  if (grepl("\\.csv$", ross_files[1])) {
-    ross_data <- as_tibble(data.table::fread(ross_files[1]))
-  } else {
-    ross_data <- haven::read_dta(ross_files[1])
-  }
-  ross_data <- ross_data |> rename_with(tolower)
-  if ("ccode" %in% names(ross_data)) ross_data <- ross_data |> rename(COWcode = ccode)
-  if ("cowcode" %in% names(ross_data)) ross_data <- ross_data |> rename(COWcode = cowcode)
-  message(sprintf("[04] Ross: %d rows", nrow(ross_data)))
+        if (grepl("\\.csv$", ross_files[1])) {
+                ross_data <- as_tibble(data.table::fread(ross_files[1]))
+        } else {
+                ross_data <- haven::read_dta(ross_files[1])
+        }
+        ross_data <- ross_data |> rename_with(tolower)
+        if ("ccode"   %in% names(ross_data)) ross_data <- ross_data |> rename(COWcode = ccode)
+        if ("cowcode" %in% names(ross_data)) ross_data <- ross_data |> rename(COWcode = cowcode)
+        message(sprintf("[04] Ross: %d rows", nrow(ross_data)))
 } else {
-  ross_data <- NULL
+        ross_data <- NULL
 }
 
-# 5b. Maddison GDP
+# 6b. Maddison GDP
 maddison_files <- list.files(
-  here("source_data", "econ", "maddison"),
-  pattern = ".*\\.(csv|dta|xlsx)$", full.names = TRUE, ignore.case = TRUE
+        here("source_data", "econ", "maddison"),
+        pattern = ".*\\.(csv|dta|xlsx)$", full.names = TRUE, ignore.case = TRUE
 )
 if (length(maddison_files) > 0) {
-  message(sprintf("[04] Found Maddison file: %s", maddison_files[1]))
-  if (grepl("\\.csv$", maddison_files[1])) {
-    maddison_data <- as_tibble(data.table::fread(maddison_files[1]))
-  } else if (grepl("\\.dta$", maddison_files[1])) {
-    maddison_data <- haven::read_dta(maddison_files[1])
-  } else {
-    maddison_data <- readxl::read_excel(maddison_files[1])
-  }
-  maddison_data <- maddison_data |> rename_with(tolower)
-  if ("ccode" %in% names(maddison_data)) maddison_data <- maddison_data |> rename(COWcode = ccode)
-  if ("cowcode" %in% names(maddison_data)) maddison_data <- maddison_data |> rename(COWcode = cowcode)
-  message(sprintf("[04] Maddison: %d rows", nrow(maddison_data)))
+        if (grepl("\\.csv$", maddison_files[1])) {
+                maddison_data <- as_tibble(data.table::fread(maddison_files[1]))
+        } else if (grepl("\\.dta$", maddison_files[1])) {
+                maddison_data <- haven::read_dta(maddison_files[1])
+        } else {
+                maddison_data <- readxl::read_excel(maddison_files[1])
+        }
+        maddison_data <- maddison_data |> rename_with(tolower)
+        if ("ccode"   %in% names(maddison_data)) maddison_data <- maddison_data |> rename(COWcode = ccode)
+        if ("cowcode" %in% names(maddison_data)) maddison_data <- maddison_data |> rename(COWcode = cowcode)
+        message(sprintf("[04] Maddison: %d rows", nrow(maddison_data)))
 } else {
-  maddison_data <- NULL
+        maddison_data <- NULL
 }
 
-# 5c. SWIID inequality
+# 6c. SWIID inequality
 swiid_files <- list.files(
-  here("source_data", "econ", "swiid"),
-  pattern = ".*\\.(csv|dta|rds)$", full.names = TRUE, ignore.case = TRUE
+        here("source_data", "econ", "swiid"),
+        pattern = ".*\\.(csv|dta|rds)$", full.names = TRUE, ignore.case = TRUE
 )
 if (length(swiid_files) > 0) {
-  message(sprintf("[04] Found SWIID file: %s", swiid_files[1]))
-  if (grepl("\\.csv$", swiid_files[1])) {
-    swiid_data <- as_tibble(data.table::fread(swiid_files[1]))
-  } else if (grepl("\\.rds$", swiid_files[1])) {
-    swiid_data <- readRDS(swiid_files[1])
-  } else {
-    swiid_data <- haven::read_dta(swiid_files[1])
-  }
-  swiid_data <- swiid_data |> rename_with(tolower)
-  if ("ccode" %in% names(swiid_data)) swiid_data <- swiid_data |> rename(COWcode = ccode)
-  if ("cowcode" %in% names(swiid_data)) swiid_data <- swiid_data |> rename(COWcode = cowcode)
-  message(sprintf("[04] SWIID: %d rows", nrow(swiid_data)))
+        if (grepl("\\.csv$", swiid_files[1])) {
+                swiid_data <- as_tibble(data.table::fread(swiid_files[1]))
+        } else if (grepl("\\.rds$", swiid_files[1])) {
+                swiid_data <- readRDS(swiid_files[1])
+        } else {
+                swiid_data <- haven::read_dta(swiid_files[1])
+        }
+        swiid_data <- swiid_data |> rename_with(tolower)
+        if ("ccode"   %in% names(swiid_data)) swiid_data <- swiid_data |> rename(COWcode = ccode)
+        if ("cowcode" %in% names(swiid_data)) swiid_data <- swiid_data |> rename(COWcode = cowcode)
+        message(sprintf("[04] SWIID: %d rows", nrow(swiid_data)))
 } else {
-  swiid_data <- NULL
+        swiid_data <- NULL
 }
 
-# 5d. Fraser Institute black market exchange rates
+# 6d. Fraser Institute black market exchange rates
 fraser_path <- here("source_data", "econ", "fraser_institute", "black_market_exchange_rates.csv")
 if (file.exists(fraser_path)) {
-  fraser_data <- as_tibble(data.table::fread(fraser_path)) |> rename_with(tolower)
-  if ("ccode" %in% names(fraser_data)) fraser_data <- fraser_data |> rename(COWcode = ccode)
-  if ("cowcode" %in% names(fraser_data)) fraser_data <- fraser_data |> rename(COWcode = cowcode)
-  message(sprintf("[04] Fraser: %d rows", nrow(fraser_data)))
+        fraser_data <- as_tibble(data.table::fread(fraser_path)) |> rename_with(tolower)
+        if ("ccode"   %in% names(fraser_data)) fraser_data <- fraser_data |> rename(COWcode = ccode)
+        if ("cowcode" %in% names(fraser_data)) fraser_data <- fraser_data |> rename(COWcode = cowcode)
+        message(sprintf("[04] Fraser: %d rows", nrow(fraser_data)))
 } else {
-  fraser_data <- NULL
+        fraser_data <- NULL
 }
 
-# 5e. Relational export dataset
+# 6e. Relational export dataset
 export_files <- list.files(
-  here("source_data", "econ", "relational_export_dataset"),
-  pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
+        here("source_data", "econ", "relational_export_dataset"),
+        pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
 )
 if (length(export_files) > 0) {
-  message(sprintf("[04] Found export file: %s", export_files[1]))
-  if (grepl("\\.csv$", export_files[1])) {
-    export_data <- as_tibble(data.table::fread(export_files[1]))
-  } else {
-    export_data <- haven::read_dta(export_files[1])
-  }
-  export_data <- export_data |> rename_with(tolower)
-  message(sprintf("[04] Export data: %d rows", nrow(export_data)))
+        if (grepl("\\.csv$", export_files[1])) {
+                export_data <- as_tibble(data.table::fread(export_files[1]))
+        } else {
+                export_data <- haven::read_dta(export_files[1])
+        }
+        export_data <- export_data |> rename_with(tolower)
+        message(sprintf("[04] Export data: %d rows", nrow(export_data)))
 } else {
-  export_data <- NULL
+        export_data <- NULL
 }
 
 # -----------------------------------------------------------------------------
-# 6. Merge all controls onto spine
+# 7. Merge all controls onto spine
 # -----------------------------------------------------------------------------
-# Country-year sources are merged twice: once for Side A, once for Side B.
-# Dyad-year sources (ATOP, export) are merged on (COWcode_a, COWcode_b, year).
-
 spine_controls <- spine
 
-# 6a. V-Dem (country-year -> both sides)
+# 7a. V-Dem (country-year -> both sides)
 if (!is.null(vdem_data)) {
-  spine_controls <- spine_controls |>
-    left_join(
-      vdem_data |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
-      by = c("COWcode_a" = "COWcode", "year")
-    ) |>
-    left_join(
-      vdem_data |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
-      by = c("COWcode_b" = "COWcode", "year")
-    )
-  message("[04] Merged V-Dem (both sides).")
+        spine_controls <- spine_controls |>
+                left_join(
+                        vdem_data |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_a" = "COWcode", "year")
+                ) |>
+                left_join(
+                        vdem_data |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_b" = "COWcode", "year")
+                )
+        message("[04] Merged V-Dem (both sides).")
 }
 
-# 6b. CINC (country-year -> both sides)
+# 7b. CINC (country-year -> both sides)
 if (!is.null(cinc_data)) {
-  spine_controls <- spine_controls |>
-    left_join(
-      cinc_data |> rename(cinc_a = cinc),
-      by = c("COWcode_a" = "COWcode", "year")
-    ) |>
-    left_join(
-      cinc_data |> rename(cinc_b = cinc),
-      by = c("COWcode_b" = "COWcode", "year")
-    )
-  message("[04] Merged CINC (both sides).")
+        spine_controls <- spine_controls |>
+                left_join(
+                        cinc_data |> rename(cinc_a = cinc),
+                        by = c("COWcode_a" = "COWcode", "year")
+                ) |>
+                left_join(
+                        cinc_data |> rename(cinc_b = cinc),
+                        by = c("COWcode_b" = "COWcode", "year")
+                )
+        message("[04] Merged CINC (both sides).")
 }
 
-# 6c. ATOP (dyad-year -- already keyed as COWcode_a, COWcode_b, year)
+# 7c. ATOP (dyad-year)
 if (!is.null(atop_data) &&
     all(c("COWcode_a", "COWcode_b", "year") %in% names(atop_data))) {
-  # Select ATOP alliance indicator columns; adjust as needed
-  atop_merge <- atop_data |>
-    distinct(COWcode_a, COWcode_b, year, .keep_all = TRUE)
-  spine_controls <- spine_controls |>
-    left_join(atop_merge, by = c("COWcode_a", "COWcode_b", "year"))
-  message(sprintf("[04] Merged ATOP: %d alliance columns.",
-                  ncol(atop_merge) - 3))
+        atop_merge <- atop_data |>
+                distinct(COWcode_a, COWcode_b, year, .keep_all = TRUE)
+        spine_controls <- spine_controls |>
+                left_join(atop_merge, by = c("COWcode_a", "COWcode_b", "year"))
+        message(sprintf("[04] Merged ATOP: %d alliance columns.",
+                        ncol(atop_merge) - 3))
 } else if (!is.null(atop_data)) {
-  message("[04] ATOP loaded but COWcode_a/COWcode_b/year keys not found. Skipping merge.")
+        message("[04] ATOP loaded but COWcode_a/COWcode_b/year keys not found. Skipping merge.")
 }
 
-# 6d. WRP religions (country-year -> both sides)
+# 7d. WRP religions (country-year -> both sides)
 if (!is.null(wrp_data)) {
-  # Select key religion percentage columns (adjust names to your WRP file)
-  wrp_cols <- intersect(
-    c("COWcode", "year", "chrstgenpct", "islmgenpct", "budgenpct", "hindgenpct"),
-    names(wrp_data)
-  )
-  if (length(wrp_cols) >= 3) {
-    wrp_clean <- wrp_data |> select(all_of(wrp_cols)) |> distinct(COWcode, year, .keep_all = TRUE)
-    spine_controls <- spine_controls |>
-      left_join(
-        wrp_clean |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
-        by = c("COWcode_a" = "COWcode", "year")
-      ) |>
-      left_join(
-        wrp_clean |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
-        by = c("COWcode_b" = "COWcode", "year")
-      )
-    message("[04] Merged WRP religions (both sides).")
-  }
+        wrp_cols <- intersect(
+                c("COWcode", "year", "chrstgenpct", "islmgenpct", "budgenpct", "hindgenpct"),
+                names(wrp_data)
+        )
+        if (length(wrp_cols) >= 3) {
+                wrp_clean <- wrp_data |> select(all_of(wrp_cols)) |> distinct(COWcode, year, .keep_all = TRUE)
+                spine_controls <- spine_controls |>
+                        left_join(
+                                wrp_clean |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
+                                by = c("COWcode_a" = "COWcode", "year")
+                        ) |>
+                        left_join(
+                                wrp_clean |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
+                                by = c("COWcode_b" = "COWcode", "year")
+                        )
+                message("[04] Merged WRP religions (both sides).")
+        }
 }
 
-# 6e. Ross oil/gas (country-year -> both sides)
-# TODO: Select specific Ross variables and merge similarly to CINC
+# 7e. FUVF (country-year -> Side A only, since it marks who initiated)
+if (!is.null(fuvf_data)) {
+        spine_controls <- spine_controls |>
+                left_join(
+                        fuvf_data |> select(COWcode, year, fuf_initiator),
+                        by = c("COWcode_a" = "COWcode", "year")
+                )
+        message("[04] Merged FUVF (Side A).")
+}
+
+# 7f-7j. Remaining economic datasets (TODO: select specific variables)
 if (!is.null(ross_data)) {
-  message("[04] Ross loaded. Select specific variables and merge as needed.")
+        message("[04] Ross loaded. Select specific variables and merge as needed.")
 }
-
-# 6f. Maddison GDP (country-year -> both sides)
-# TODO: Select GDP variables and merge
 if (!is.null(maddison_data)) {
-  message("[04] Maddison loaded. Select specific variables and merge as needed.")
+        message("[04] Maddison loaded. Select specific variables and merge as needed.")
 }
-
-# 6g. SWIID (country-year -> both sides)
-# TODO: Select Gini variables and merge
 if (!is.null(swiid_data)) {
-  message("[04] SWIID loaded. Select specific variables and merge as needed.")
+        message("[04] SWIID loaded. Select specific variables and merge as needed.")
 }
-
-# 6h. Fraser (country-year -> both sides)
-# TODO: Select exchange rate variables and merge
 if (!is.null(fraser_data)) {
-  message("[04] Fraser loaded. Select specific variables and merge as needed.")
+        message("[04] Fraser loaded. Select specific variables and merge as needed.")
 }
-
-# 6i. Relational export data (dyad-year)
-# TODO: Merge on dyadic keys
 if (!is.null(export_data)) {
-  message("[04] Export data loaded. Merge on dyadic keys as needed.")
+        message("[04] Export data loaded. Merge on dyadic keys as needed.")
 }
 
 # -----------------------------------------------------------------------------
-# 6j. Construct GRAVE-D sidea_* ideology & support variables
+# 8. Construct GRAVE-D sidea_* ideology & support variables
 # -----------------------------------------------------------------------------
-# These are derived from V-Dem legitimation indicators (merged in 6a as
-# _a / _b suffixed columns). The raw leader data from Archigos/Colgan/
-# leader_ideology was attached in 03_build_grave_d_ideology.R.
-#
-# V-Dem source -> GRAVE-D target mapping:
-#   v2exl_legitideol_a  -> sidea_revisionist_domestic (ideology-based legit)
-#   v2exl_legitlead_a   -> sidea_dynamic_leader (personalist legit)
-#   v2pepwrses_a        -> sidea_party_elite_support (power by SES)
-#   v2pepwrsoc_a        -> sidea_ethnic_racial_support (power by social group)
-#   v2x_cspart_a        -> sidea_rural_worker_support (civil society)
-#   v2dlreason_a        -> sidea_winning_coalition_size (deliberation proxy)
-#
-# Thresholds and sub-type breakdowns (nationalist, socialist, religious,
-# reactionary, separatist) require supplementary coding from Colgan or
-# manual classification. Placeholders below use the continuous V-Dem
-# scores directly; refine thresholds as needed.
-
 if ("v2exl_legitideol_a" %in% names(spine_controls)) {
-  spine_controls <- spine_controls |>
-    mutate(
-      # Ideology-based legitimation (continuous, higher = more ideological)
-      sidea_revisionist_domestic = v2exl_legitideol_a,
-
-      # Sub-types: these require external coding to disaggregate.
-      # Placeholder: set to NA until Colgan/manual classification is added.
-      sidea_nationalist_revisionist_domestic = NA_real_,
-      sidea_socialist_revisionist_domestic   = NA_real_,
-      sidea_religious_revisionist_domestic   = NA_real_,
-      sidea_reactionary_revisionist_domestic = NA_real_,
-      sidea_separatist_revisionist_domestic  = NA_real_,
-
-      # Personalist/charismatic leader legitimation
-      sidea_dynamic_leader = v2exl_legitlead_a
-    )
-  message("[04] Built sidea_revisionist_domestic, sidea_dynamic_leader from V-Dem.")
+        spine_controls <- spine_controls |>
+                mutate(
+                        sidea_revisionist_domestic = v2exl_legitideol_a,
+                        sidea_nationalist_revisionist_domestic = NA_real_,
+                        sidea_socialist_revisionist_domestic   = NA_real_,
+                        sidea_religious_revisionist_domestic   = NA_real_,
+                        sidea_reactionary_revisionist_domestic = NA_real_,
+                        sidea_separatist_revisionist_domestic  = NA_real_,
+                        sidea_dynamic_leader = v2exl_legitlead_a
+                )
+        message("[04] Built sidea_revisionist_domestic, sidea_dynamic_leader from V-Dem.")
 } else {
-  message("[04] V-Dem legitimation columns not found; skipping sidea_* ideology.")
+        message("[04] V-Dem legitimation columns not found; skipping sidea_* ideology.")
 }
 
-# Support group variables from V-Dem
 if ("v2pepwrses_a" %in% names(spine_controls)) {
-  spine_controls <- spine_controls |>
-    mutate(
-      sidea_party_elite_support    = v2pepwrses_a,
-      sidea_ethnic_racial_support  = v2pepwrsoc_a,
-      sidea_rural_worker_support   = v2x_cspart_a,
-      sidea_military_support       = NA_real_,   # No direct V-Dem proxy
-      sidea_religious_support      = NA_real_,   # Needs WRP or manual coding
-      sidea_winning_coalition_size = v2dlreason_a
-    )
-  message("[04] Built sidea_*_support variables from V-Dem.")
+        spine_controls <- spine_controls |>
+                mutate(
+                        sidea_party_elite_support    = v2pepwrses_a,
+                        sidea_ethnic_racial_support  = v2pepwrsoc_a,
+                        sidea_rural_worker_support   = v2x_cspart_a,
+                        sidea_military_support       = NA_real_,
+                        sidea_religious_support      = NA_real_,
+                        sidea_winning_coalition_size = v2dlreason_a
+                )
+        message("[04] Built sidea_*_support variables from V-Dem.")
 } else {
-  message("[04] V-Dem power distribution columns not found; skipping support vars.")
+        message("[04] V-Dem power distribution columns not found; skipping support vars.")
 }
 
 # -----------------------------------------------------------------------------
-# 7. Derived variables
+# 9. Derived variables
 # -----------------------------------------------------------------------------
 spine_controls <- spine_controls |>
-  mutate(
-    targets_democracy = if_else(
-      "v2x_libdem_b" %in% names(spine_controls) & !is.na(v2x_libdem_b),
-      if_else(v2x_libdem_b >= 0.5, 1L, 0L),
-      NA_integer_
-    ),
-    cold_war = if_else(year >= 1947 & year <= 1991, 1L, 0L)
-  )
+        mutate(
+                targets_democracy = if_else(
+                        "v2x_libdem_b" %in% names(spine_controls) & !is.na(v2x_libdem_b),
+                        if_else(v2x_libdem_b >= 0.5, 1L, 0L),
+                        NA_integer_
+                ),
+                cold_war = if_else(year >= 1947 & year <= 1991, 1L, 0L)
+        )
 
 message(sprintf(
-  "[04] spine_controls: %d rows x %d cols",
-  nrow(spine_controls), ncol(spine_controls)
+        "[04] spine_controls: %d rows x %d cols",
+        nrow(spine_controls), ncol(spine_controls)
 ))
 
 # -----------------------------------------------------------------------------
-# 8. Save
+# 10. Save
 # -----------------------------------------------------------------------------
 saveRDS(spine_controls, here("data", "spine_controls.rds"))
 message("[04_build_controls.R] Saved: data/spine_controls.rds")
 message("[04_build_controls.R] Done.")
+
+                                 
