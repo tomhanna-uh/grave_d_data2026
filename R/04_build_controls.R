@@ -354,26 +354,89 @@ if (!is.null(atop_data) &&
         message("[04] ATOP loaded but COWcode_a/COWcode_b/year keys not found. Skipping merge.")
 }
 
+
+# Fill NA ATOP values with 0 for dyads with no alliance
+# Logic: absence from ATOP means no alliance exists, not missing data.
+# All binary/count alliance indicators should be 0, not NA.
+atop_fill_cols <- intersect(
+        c("atopally", "defense", "offense", "neutral", "nonagg", "consul",
+          "shareob", "bilatno", "multino", "number", "asymm"),
+        names(spine_controls)
+)
+if (length(atop_fill_cols) > 0) {
+        spine_controls <- spine_controls |>
+                mutate(across(all_of(atop_fill_cols), ~ replace_na(., 0)))
+        message(sprintf("[04] Filled %d ATOP columns: NA -> 0 for non-allied dyads.",
+                        length(atop_fill_cols)))
+}
+
+
 # 7d. WRP religions (country-year -> both sides)
+# WRP data is released at 5-year intervals (1945, 1950, ..., 2010).
+# Interpolation method: Linear interpolation between observed values.
+# For years before the first observation, the earliest value is carried
+# backward. For years after the last observation (post-2010), the last
+# value is carried forward (LOCF). This assumes religious demographic
+# change is gradual and roughly linear between census waves.
 if (!is.null(wrp_data)) {
         wrp_cols <- intersect(
                 c("COWcode", "year", "chrstgenpct", "islmgenpct", "budgenpct", "hindgenpct"),
                 names(wrp_data)
         )
         if (length(wrp_cols) >= 3) {
-                wrp_clean <- wrp_data |> select(all_of(wrp_cols)) |> distinct(COWcode, year, .keep_all = TRUE)
+                wrp_clean <- wrp_data |>
+                        select(all_of(wrp_cols)) |>
+                        distinct(COWcode, year, .keep_all = TRUE)
+                
+                # Determine the religion percentage columns (everything except keys)
+                relig_cols <- setdiff(wrp_cols, c("COWcode", "year"))
+                
+                # Get the full range of years in the spine
+                all_years <- sort(unique(spine_controls$year))
+                all_cow   <- sort(unique(c(spine_controls$COWcode_a, spine_controls$COWcode_b)))
+                
+                # Expand to full country-year panel
+                wrp_panel <- tidyr::expand_grid(COWcode = all_cow, year = all_years) |>
+                        left_join(wrp_clean, by = c("COWcode", "year"))
+                
+                # Linear interpolation + carry forward/backward per country
+                # approx(..., rule = 2) extrapolates using the nearest observed value
+                # at both ends (LOCF forward, earliest-carried backward)
+                wrp_interp <- wrp_panel |>
+                        arrange(COWcode, year) |>
+                        group_by(COWcode) |>
+                        mutate(across(
+                                all_of(relig_cols),
+                                ~ if (sum(!is.na(.)) >= 2) {
+                                        approx(year[!is.na(.)], .[!is.na(.)], xout = year, rule = 2)$y
+                                } else if (sum(!is.na(.)) == 1) {
+                                        replace_na(., .[!is.na(.)][1])
+                                } else {
+                                        .
+                                }
+                        )) |>
+                        ungroup()
+                
+                message(sprintf(
+                        "[04] WRP interpolated: %d country-years (from %d observed 5-year intervals).",
+                        sum(!is.na(wrp_interp[[relig_cols[1]]])),
+                        sum(!is.na(wrp_clean[[relig_cols[1]]]))
+                ))
+                
+                # Merge interpolated WRP onto both sides
                 spine_controls <- spine_controls |>
                         left_join(
-                                wrp_clean |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
+                                wrp_interp |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
                                 by = c("COWcode_a" = "COWcode", "year")
                         ) |>
                         left_join(
-                                wrp_clean |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
+                                wrp_interp |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
                                 by = c("COWcode_b" = "COWcode", "year")
                         )
-                message("[04] Merged WRP religions (both sides).")
+                message("[04] Merged WRP religions (both sides, interpolated).")
         }
 }
+
 
 # 7e. FUVF (country-year -> Side A only, since it marks who initiated)
 if (!is.null(fuvf_data)) {
@@ -408,33 +471,42 @@ if (!is.null(export_data)) {
 if ("v2exl_legitideol_a" %in% names(spine_controls)) {
         spine_controls <- spine_controls |>
                 mutate(
+                        # Overall ideology-based legitimation
                         sidea_revisionist_domestic = v2exl_legitideol_a,
-                        sidea_nationalist_revisionist_domestic = NA_real_,
-                        sidea_socialist_revisionist_domestic   = NA_real_,
-                        sidea_religious_revisionist_domestic   = NA_real_,
-                        sidea_reactionary_revisionist_domestic = NA_real_,
-                        sidea_separatist_revisionist_domestic  = NA_real_,
+                        
+                        # Sub-types mapped to v2exl_legitideolcr categories
+                        # 0=Nationalist, 1=Socialist, 2=Restorative, 3=Separatist, 4=Religious
+                        sidea_nationalist_revisionist_domestic = if ("v2exl_legitideolcr_0_a" %in% names(spine_controls)) v2exl_legitideolcr_0_a else NA_real_,
+                        sidea_socialist_revisionist_domestic   = if ("v2exl_legitideolcr_1_a" %in% names(spine_controls)) v2exl_legitideolcr_1_a else NA_real_,
+                        sidea_reactionary_revisionist_domestic = if ("v2exl_legitideolcr_2_a" %in% names(spine_controls)) v2exl_legitideolcr_2_a else NA_real_,
+                        sidea_separatist_revisionist_domestic  = if ("v2exl_legitideolcr_3_a" %in% names(spine_controls)) v2exl_legitideolcr_3_a else NA_real_,
+                        sidea_religious_revisionist_domestic   = if ("v2exl_legitideolcr_4_a" %in% names(spine_controls)) v2exl_legitideolcr_4_a else NA_real_,
+                        
+                        # Personalist/charismatic leader legitimation
                         sidea_dynamic_leader = v2exl_legitlead_a
                 )
-        message("[04] Built sidea_revisionist_domestic, sidea_dynamic_leader from V-Dem.")
+        message("[04] Built sidea_revisionist_domestic and sub-type variables from V-Dem.")
 } else {
         message("[04] V-Dem legitimation columns not found; skipping sidea_* ideology.")
 }
 
+# Support group variables
 if ("v2pepwrses_a" %in% names(spine_controls)) {
         spine_controls <- spine_controls |>
                 mutate(
                         sidea_party_elite_support    = v2pepwrses_a,
                         sidea_ethnic_racial_support  = v2pepwrsoc_a,
                         sidea_rural_worker_support   = v2x_cspart_a,
-                        sidea_military_support       = NA_real_,
-                        sidea_religious_support      = NA_real_,
+                        sidea_military_support       = if ("cinc_a" %in% names(spine_controls)) cinc_a else NA_real_,
+                        sidea_religious_support      = if ("v2regsupgroups_7_a" %in% names(spine_controls)) v2regsupgroups_7_a else NA_real_,
                         sidea_winning_coalition_size = v2dlreason_a
                 )
-        message("[04] Built sidea_*_support variables from V-Dem.")
+        message("[04] Built sidea_*_support variables.")
 } else {
         message("[04] V-Dem power distribution columns not found; skipping support vars.")
 }
+
+
 
 # -----------------------------------------------------------------------------
 # 9. Derived variables
