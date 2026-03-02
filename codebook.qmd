@@ -603,4 +603,105 @@ Source: COW World Religion Project (Maoz & Henderson 2013). WRP data is released
    - `05_build_master.R` — merge, revisionist potential, derived variables, export
 
 
+---
 
+## Appendix D: Imputation Protocol (06_impute_controls.R)
+
+### Purpose
+
+The GRAVE-D dataset contains scattered missing values in continuous V-Dem, CINC, and economic control variables due to differences in temporal and geographic coverage across source datasets. Script `06_impute_controls.R` applies a conservative, multi-stage imputation strategy to fill these gaps while preserving the integrity of structurally missing data.
+
+### What Is NOT Imputed
+
+The following variable categories are excluded from all imputation stages. Their missing values are structural — they reflect the absence of data coverage, not random gaps.
+
+| Category | Examples | Reason |
+|----------|----------|--------|
+| Identifiers & keys | COWcode_a/b, year, dyad, iso3a/b | Complete by construction. |
+| FBIC spine | bandwidth, economicbandwidth, etc. | Complete by construction. |
+| Conflict outcomes | hihosta, mid_initiated, cold_war | Complete or structurally defined. |
+| Temporal controls | peace_years, t, t², t³ | Complete by construction. |
+| Archigos leader variables | obsid, leader, entry, exit, etc. | Missing = dyad-year outside Archigos coverage. Not a gap. |
+| Colgan leader variables | revolutionaryleader, chg_*, revage, etc. | Missing = leader not in Colgan dataset or not a revolutionary leader. |
+| ATOP treaty identifiers | ddyad, transyr, atopid1–7, version | Missing = no alliance exists. Binary alliance indicators (atopally, defense, etc.) are zero-filled separately. |
+| Internet censorship | v2mecenefi_a/b | Structurally absent for the pre-internet era. Not a gap. |
+| Variables with >80% missing | Any variable exceeding 80% NA | Insufficient observed data for reliable imputation. |
+| Character/text variables | All non-numeric columns | Cannot be interpolated. |
+| Derived variables | rev_potential_a/b, targets_democracy, sidea_*, islm_dist, etc. | Not imputed directly — recomputed in Stage 4 from imputed base variables. |
+
+### Stage 1: Country-Year Panel Interpolation
+
+**Method:** Linear interpolation within each country's time series using R's `approx()` function with `rule = 2`.
+
+**Logic:** For each eligible numeric variable, the script extracts a monadic country-year panel (one row per country per year), groups by country, and interpolates between observed values. At the edges of each country's time series:
+- Years **before** the first observation receive the earliest observed value (carried backward).
+- Years **after** the last observation receive the latest observed value (carried forward — LOCF).
+
+**Scope:** Applied separately to Side A variables (grouped by COWcode_a) and Side B variables (grouped by COWcode_b). This ensures that imputation respects the monadic structure — a value imputed for country X in year Y is consistent across all dyads involving country X in that year.
+
+**Rationale:** Most V-Dem and economic variables change gradually within a country. Linear interpolation between observed values is the most defensible assumption for filling 1–3 year gaps within an otherwise observed time series.
+
+### Stage 2: Regional-Year Median Fill
+
+**Method:** For key V-Dem indices and CINC only, remaining missing values are filled with the median value from the same UN geographic region and year.
+
+**Scope:** This stage only fires for countries with **no observed data at all** in the base variable — typically microstates or territories outside V-Dem's country coverage. Countries that had any observed data were already handled by Stage 1.
+
+**Variables affected:** `v2x_polyarchy`, `v2x_libdem`, `v2x_corr`, `v2x_rule`, `v2exl_legitideol`, `v2exl_legitlead`, `v2x_cspart`, `v2pepwrses`, `v2pepwrsoc`, `v2dlreason`, `v2exl_legitideolcr_0` through `_4`, and `cinc` (all with `_a` and `_b` suffixes).
+
+**Rationale:** Regional medians provide a weak but defensible prior for countries with zero coverage. This prevents listwise deletion of entire dyads involving microstates or non-covered territories in downstream analysis.
+
+### Stage 3: Derived Variable Recomputation
+
+After Stages 1–2, all derived variables are recomputed from their now-imputed base inputs. This ensures internal consistency — a change in an imputed `v2x_libdem_a` value propagates correctly to `targets_democracy`, `dem_constraint_inv_a`, `rev_potential_a`, and `revisionism_distance`.
+
+| Derived variable | Recomputed from |
+|-----------------|-----------------|
+| sidea_revisionist_domestic | v2exl_legitideol_a |
+| sidea_nationalist_revisionist_domestic | v2exl_legitideolcr_0_a |
+| sidea_socialist_revisionist_domestic | v2exl_legitideolcr_1_a |
+| sidea_reactionary_revisionist_domestic | v2exl_legitideolcr_2_a |
+| sidea_separatist_revisionist_domestic | v2exl_legitideolcr_3_a |
+| sidea_religious_revisionist_domestic | v2exl_legitideolcr_4_a |
+| sidea_dynamic_leader | v2exl_legitlead_a |
+| sidea_party_elite_support | v2pepwrses_a |
+| sidea_ethnic_racial_support | v2pepwrsoc_a |
+| sidea_rural_worker_support | v2x_cspart_a |
+| sidea_military_support | cinc_a |
+| sidea_religious_support | v2regsupgroups_7_a |
+| sidea_winning_coalition_size | v2dlreason_a |
+| targets_democracy | v2x_libdem_a < 0.3 AND v2x_libdem_b ≥ 0.5 |
+| ideol_extremity_a/b | abs(v2exl_legitideol − annual global median) |
+| dem_constraint_inv_a/b | 1 − v2x_libdem |
+| z_legit_a/b, z_dem_a/b, z_ext_a/b | Z-scores of above components |
+| rev_potential_a/b | (z_legit + z_dem + z_ext) / 3 |
+| revisionism_distance | abs(rev_potential_a − rev_potential_b) |
+| islm_dist | abs(islmgenpct_a − islmgenpct_b) |
+| chrst_dist | abs(chrstgenpct_a − chrstgenpct_b) |
+
+### Stage 4: Export and Diagnostics
+
+The script overwrites `data/GRAVE_D_Master.rds` and `ready_data/GRAVE_D_Master.csv` with the imputed versions and prints a diagnostic table showing remaining NA counts and percentages for key analysis variables.
+
+**Note:** The `GRAVE_D_Master_with_Leaders.csv` export (which adds Side B leader data) must be regenerated after imputation by re-running the leader merge block from `05_build_master.R` or appending it to the end of `06_impute_controls.R`.
+
+### Remaining NAs in key analysis variables
+
+v2x_libdem_a                                     59198  ( 3.5%)
+    v2x_libdem_b                                     59198  ( 3.5%)
+    v2exl_legitideol_a                               59198  ( 3.5%)
+    v2exl_legitideol_b                               59198  ( 3.5%)
+    cinc_a                                               0  ( 0.0%)
+    cinc_b                                               0  ( 0.0%)
+    rev_potential_a                                  59198  ( 3.5%)
+    rev_potential_b                                  59198  ( 3.5%)
+    revisionism_distance                            116482  ( 6.8%)
+    targets_democracy                                    0  ( 0.0%)
+    sidea_revisionist_domestic                       59198  ( 3.5%)
+    sidea_nationalist_revisionist_domestic           59198  ( 3.5%)
+    sidea_military_support                               0  ( 0.0%)
+    sidea_religious_support                         166631  ( 9.8%)
+    chrstgenpct_a                                    11941  ( 0.7%)
+    islmgenpct_a                                     11941  ( 0.7%)
+    islm_dist                                        23862  ( 1.4%)
+    chrst_dist                                       23862  ( 1.4%)

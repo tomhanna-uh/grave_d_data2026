@@ -168,13 +168,32 @@ All source data files are **gitignored** and must be placed in `source_data/` be
 
 ---
 
-## Running the Pipeline
+## Pipeline Scripts
 
-All scripts use `here::here()` for path management.
+The data production pipeline consists of six R scripts in the `R/` directory,
+run sequentially:
+
+| Script | Purpose |
+|--------|---------|
+| `00_packages.R` | Load and attach all required R packages. |
+| `01_build_fbic_spine.R` | Build the directed dyad-year spine from FBIC bandwidth data. |
+| `02_build_conflict.R` | Merge MID conflict variables onto the spine. |
+| `03_build_grave_d_ideology.R` | Merge Archigos, Colgan, and global leader ideology data. |
+| `04_build_controls.R` | Merge V-Dem (~100 variables via `vdemdata` package), CINC, ATOP alliances, WRP religion (with linear interpolation), FUVF first use of force, and economic controls. ATOP non-allied dyads are zero-filled. |
+| `05_build_master.R` | Assemble final dataset: merge all intermediates, compute revisionist potential (Z-score composite of ideology, democratic constraint, and ideological extremity), derive conflict and religion distance variables, and export. Produces both `GRAVE_D_Master.csv` and `GRAVE_D_Master_with_Leaders.csv` (with Side B leader data). |
+| `06_impute_controls.R` | Targeted imputation for scattered missing data. Interpolates within country-year panels (linear interpolation + carry forward/backward), applies regional-year median fill for countries with no coverage, then recomputes all derived variables from the imputed base data. Excludes structurally missing data (leader variables, Colgan, ATOP identifiers, internet censorship). |
+
+### Running the pipeline
 
 ```r
-# Run full pipeline
-source("run_all.R")
+# From the project root in R:
+source("R/00_packages.R")
+source("R/01_build_fbic_spine.R")
+source("R/02_build_conflict.R")
+source("R/03_build_grave_d_ideology.R")
+source("R/04_build_controls.R")
+source("R/05_build_master.R")
+source("R/06_impute_controls.R")
 ```
 
 Or step by step:
