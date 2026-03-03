@@ -564,22 +564,35 @@ Source: COW World Religion Project (Maoz & Henderson 2013). WRP data is released
 
 ---
 
-## Appendix B: Data Sources
+## Appendix B: Data Sources and Required Citations
 
-| Source | Citation | URL |
-|--------|----------|-----|
-| FBIC | Kadera & Sorokin | — |
-| MIDs v4.0 | Palmer et al. (2022) | correlatesofwar.org |
-| V-Dem v15 | Coppedge et al. (2025) | v-dem.net |
-| Archigos | Goemans, Gleditsch & Chiozza | archigos.org |
-| Colgan | Colgan (2012) "Measuring Revolution" | — |
-| Global Leader Ideology | — | — |
-| Polity | Marshall & Gurr | systemicpeace.org |
-| COW NMC | Singer, Bremer & Stuckey | correlatesofwar.org |
-| ATOP v5.1 | Leeds et al. | atop-data.com |
-| WRP | Maoz & Henderson (2013) | correlatesofwar.org |
-| FUVF | Caprioli & Trumbore | d.umn.edu/~mcapriol/ |
-| countrycode | Arel-Bundock | CRAN |
+The GRAVE-D dataset integrates variables from the source datasets listed below. Users of GRAVE-D should cite the original source datasets as indicated. Datasets marked **(PENDING)** are planned for future integration.
+
+| # | Source Dataset | Required Citation | Status |
+|---|----------------|-------------------|--------|
+| 1 | Formal Bilateral Influence Capacity (FBIC) Index | Moyer, Jonathan D., et al. *FBIC Index*. Pardee Center, University of Denver. | Integrated |
+| 2 | Correlates of War --- Militarized Interstate Disputes (MIDs v5) | Palmer, Glenn, et al. 2015. "The MID4 Data Set." *Conflict Management and Peace Science* 32(2): 222--242. | Integrated |
+| 3 | Varieties of Democracy (V-Dem) v15 | Coppedge, Michael, et al. 2025. "V-Dem Dataset v15." V-Dem Institute, University of Gothenburg. | Integrated |
+| 4 | V-Dem Episodes of Regime Transformation (ERT) | Edgell, Amanda B., et al. 2020. *ERT Dataset*. V-Dem Project. | Integrated |
+| 5 | Archigos | Goemans, H.E., K.S. Gleditsch, and G. Chiozza. 2009. "Introducing Archigos." *Journal of Peace Research* 46(2): 269--283. | Integrated |
+| 6 | Colgan Revolutionary Leaders Dataset | Colgan, Jeff D. 2013. "Domestic Revolutionary Leaders and International Conflict." *World Politics* 65(4): 656--696. | Integrated |
+| 7 | Global Leader Ideology Dataset | Herre, Bastian. 2022. *Global Leader Ideology Dataset*. University of Chicago. | Integrated |
+| 8 | Polity | Marshall, Monty G., and Keith Jaggers. Polity5 Project. Center for Systemic Peace. | Integrated |
+| 9 | Correlates of War --- National Material Capabilities (NMC v6) | Singer, J. David. 1988. "Reconstructing the Correlates of War Dataset on Material Capabilities." *International Interactions* 14(2): 115--132. | Integrated |
+| 10 | Alliance Treaty Obligations and Provisions (ATOP v5.1) | Leeds, Brett Ashley, et al. 2002. "Alliance Treaty Obligations and Provisions, 1815--1944." *International Interactions* 28(3): 237--260. | Integrated |
+| 11 | Correlates of War --- World Religion Project | Maoz, Zeev, and Errol A. Henderson. 2013. "The World Religion Dataset." *International Interactions* 39(3): 265--291. | Integrated |
+| 12 | First Use of Violent Force Dataset | Caprioli, Mary, and Peter F. Trumbore. 2003. "Identifying 'First Use' of Violent Force." *International Studies Perspectives* 4(2): 153--172. | Integrated |
+| 13 | Hanson and Sigman State Capacity Index | Hanson, Jonathan K., and Rachel Sigman. 2021. "Leviathan's Latent Dimensions." *Journal of Politics* 83(4): 1495--1510. | Integrated |
+| 14 | Fraser Institute Economic Freedom Dataset | Gwartney, James, et al. 2022. *Economic Freedom of the World: 2022 Annual Report*. Fraser Institute. | Integrated |
+| 15 | Maddison Project Database | Bolt, Jutta, and Jan Luiten van Zanden. 2014. "The Maddison Project." *Economic History Review* 67(3): 627--651. | Integrated |
+| 16 | Ross Oil and Gas Dataset | Ross, Michael L. *Oil and Gas Data, 1932--2014*. Harvard Dataverse. doi:10.7910/DVN/ZTPW0Y. | Integrated |
+| 17 | Standardized World Income Inequality Database (SWIID) | Solt, Frederick. 2020. "Measuring Income Inequality Across Countries and Over Time." *Social Science Quarterly* 101(3): 1183--1199. | Integrated |
+| 18 | RED --- Relational Export Dataset | Dur, Andreas, Leonardo Baccini, et al. *RED Dataset*. University of Bremen. | Integrated |
+| 19 | ALBA Membership | Hanna, Tom. 2026. Original coding. | Integrated |
+| 20 | countrycode (R package) | Arel-Bundock, Vincent. *countrycode*. CRAN. | Integrated |
+| 21 | Correlates of War --- Direct Contiguity | Correlates of War Project. *Direct Contiguity Data Set*. | **(PENDING)** |
+| 22 | Uppsala Conflict Data Program (UCDP) | UCDP. Department of Peace and Conflict Research, Uppsala University. | **(PENDING)** |
+| 23 | Non-State Armed Groups (NAGs) --- Dangerous Companions Project | San-Akca, Belgin. 2016. *States in Disguise*. Oxford University Press. | **(PENDING)** |
 
 ---
 
