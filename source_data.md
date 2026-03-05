@@ -64,6 +64,10 @@ For the World Religion and Direct Contiguity datasets, follow the exact citation
 
 ---
 
+Gleditsch, Kristian S., and Michael D. Ward. 2001. "Measuring Space: A Minimum-Distance Database and Applications to International Studies." Journal of Peace Research 38(6): 739–758.
+
+---
+
 ## Archigos
 
 Use the standard article citation:[web:8]
