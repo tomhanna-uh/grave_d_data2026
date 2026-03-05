@@ -89,7 +89,19 @@ never_impute <- c(
         "sidea_reactionary_revisionist_domestic", "sidea_separatist_revisionist_domestic",
         "sidea_dynamic_leader", "sidea_religious_support", "sidea_military_support",
         "sidea_party_elite_support", "sidea_ethnic_racial_support",
-        "sidea_rural_worker_support", "sidea_winning_coalition_size"
+        "sidea_rural_worker_support", "sidea_winning_coalition_size",
+        
+        # UCDP Non-State Conflict variables (absence = 0, not missing)
+        "nonstate_conflict_a", "nonstate_conflict_b",
+        "nonstate_conflict_count_a", "nonstate_conflict_count_b",
+        "nonstate_fatalities_best_a", "nonstate_fatalities_best_b",
+        "nonstate_fatalities_low_a", "nonstate_fatalities_low_b",
+        "nonstate_fatalities_high_a", "nonstate_fatalities_high_b",
+
+        # NAGs support variables (absence = 0, not missing)
+        "nags_any_support", "nags_active_support", "nags_defacto_support",
+        "nags_support_count",
+        "nags_safe_haven", "nags_training", "nags_arms", "nags_funds", "nags_troops"
 )
 
 never_impute <- unique(never_impute)
