@@ -245,6 +245,8 @@ This file should be copied into the `data/` directory of downstream analysis rep
 
 Hanna, Tom. GRAVE-D Data 2026: Master Dyadic Dataset Builder. Working repository, University of Houston, 2026.
 
+Please be sure to cite original data sources listed in source_data.md
+
 ---
 
 ## License
