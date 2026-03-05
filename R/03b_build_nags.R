@@ -140,6 +140,11 @@ for (src in names(id_map)) {
   }
 }
 
+# Coerce COW codes to numeric (CSV may read them as character)
+nags$COWcode_a <- as.numeric(nags$COWcode_a)
+nags$COWcode_b <- as.numeric(nags$COWcode_b)
+nags$year <- as.numeric(nags$year)
+
 # Ensure 'year' exists
 if (!"year" %in% names(nags)) {
   yr_col <- grep("^year$", names(nags), value = TRUE, ignore.case = TRUE)
