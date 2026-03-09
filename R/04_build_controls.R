@@ -527,7 +527,26 @@ message(sprintf(
 ))
 
 # -----------------------------------------------------------------------------
-# 10. Save
+# 10. Capitals distance variable
+# -----------------------------------------------------------------------------
+
+capdist <- data.table::fread(here("source_data", "gleditsch", "capdist.csv"))
+names(capdist) <- tolower(names(capdist))
+# GW codes -> COW codes
+capdist$COWcode_a <- countrycode::countrycode(capdist$numa, "gwn", "cown")
+capdist$COWcode_b <- countrycode::countrycode(capdist$numb, "gwn", "cown")
+capdist <- capdist |>
+        filter(!is.na(COWcode_a), !is.na(COWcode_b)) |>
+        select(COWcode_a, COWcode_b, capital_dist_km = kmdist) |>
+        distinct(COWcode_a, COWcode_b, .keep_all = TRUE)
+# Left-join onto spine (no year needed — distance is static)
+spine <- spine |>
+        left_join(capdist, by = c("COWcode_a", "COWcode_b"))
+
+
+
+# -----------------------------------------------------------------------------
+# 11. Save
 # -----------------------------------------------------------------------------
 saveRDS(spine_controls, here("data", "spine_controls.rds"))
 message("[04_build_controls.R] Saved: data/spine_controls.rds")
