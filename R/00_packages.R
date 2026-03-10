@@ -39,11 +39,14 @@ library(cli)          # Progress bars and CLI messaging
 # requireNamespace("vdemdata", quietly = TRUE).
 # Install with: remotes::install_github("vdemdata/vdemdata")
 
+# --- Testing ---
+library(testthat)    # Unit testing
+
 message("[00_packages.R] All packages loaded.")
 
 # Install any missing packages:
 # pak::pkg_install(c(
 #   "here", "tidyverse", "data.table", "haven", "readxl",
-#   "countrycode", "lubridate", "stringr", "cli"
+#   "countrycode", "lubridate", "stringr", "cli", "testthat"
 # ))
 # remotes::install_github("vdemdata/vdemdata")
