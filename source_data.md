@@ -199,3 +199,8 @@ The Dangerous Companions / NAGs project website indicates that the data are asso
 > San-Akca, Belgin. 2016. *States in Disguise: Causes of External State Support for Rebel Groups*. New York: Oxford University Press.[web:28]
 
 When referencing the dataset, identify it as the “Non-State Armed Groups (NAGs) Dataset, Dangerous Companions Project (version 2015)” or the specific version indicated on the project website.[web:21][web:28]
+
+## Gleditsch & Ward / Weidmann Capitals Distance
+
+- Gleditsch & Ward / Weidmann Capitals Distance (`capdist.csv`) — Static dyadic km between capitals, processed with countrycode conversion to COW numeric codes.
+
