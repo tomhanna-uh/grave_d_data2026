@@ -183,6 +183,12 @@ run sequentially:
 | `05_build_master.R` | Assemble final dataset: merge all intermediates, compute revisionist potential (Z-score composite of ideology, democratic constraint, and ideological extremity), derive conflict and religion distance variables, and export. Produces both `GRAVE_D_Master.csv` and `GRAVE_D_Master_with_Leaders.csv` (with Side B leader data). |
 | `06_impute_controls.R` | Targeted imputation for scattered missing data. Interpolates within country-year panels (linear interpolation + carry forward/backward), applies regional-year median fill for countries with no coverage, then recomputes all derived variables from the imputed base data. Excludes structurally missing data (leader variables, Colgan, ATOP identifiers, internet censorship). |
 
+markdown
+## NAG-Specific Builds (2026)
+- `03b_build_nags.R`: creates `nags_any_support`, `nags_active_support`, `nags_training` (camps bundled), `nags_arms`, `nags_funds`, `nags_troops`, `nags_support_count`.  
+- `02b_build_nonstate_conflict.R`: adds monadic UCDP non-state conflict controls (`nonstate_conflict_a/b` etc.) for robustness.  
+Run order unchanged; NAG variables zero-filled and ready for signaling models.
+
 ### Running the pipeline
 
 ```r

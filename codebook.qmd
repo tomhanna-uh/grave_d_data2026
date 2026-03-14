@@ -542,6 +542,15 @@ Source: Alliance Treaty Obligations and Provisions v5.1 (Leeds et al.). Merged i
 
 Source: COW World Religion Project (Maoz & Henderson 2013). WRP data is released in 5-year intervals (1945–2010). Interpolation and imputation strategies as described in the GRAVE-M codebook. Merged in 04_build_controls.R.
 
+## 13. Capitals Distance
+`capital_dist_km` — Kilometers between country capitals (Gleditsch & Ward / Weidmann data). Static dyadic variable joined to FBIC spine. Log-transformed versions recommended for modeling (controls for geographic feasibility of support/visibility).
+Source: capdist.csv (source_data/gleditsch/).
+
+## 14. Non-State Armed Groups (NAG) Support Variables
+Built in 03b_build_nags.R from Dangerous Companions Dataset.  
+`nags_training`, `nags_safe_haven`, `nags_arms`, `nags_funds`, `nags_troops`, `nags_support_count`, `nags_any_support`.  
+Used for signaling visibility (H12) and democracy-target avoidance (H13).
+
 ---
 
 ## Appendix A: Variable Count Summary
