@@ -72,6 +72,8 @@ if (requireNamespace("vdemdata", quietly = TRUE)) {
                 "v2regsupgroups_12", "v2regsupgroups_13",
                 "v2regsupgroupssize", "v2regimpgroup",
                 "v2reginfo", "v2regint", "v2regendtype",
+                # NEW: Regime opposition groups size 
+                "v2regoppgroupssize",
                 # HOG removal probabilities (0-8)
                 "v2exrmhgnp_0", "v2exrmhgnp_1", "v2exrmhgnp_2", "v2exrmhgnp_3",
                 "v2exrmhgnp_4", "v2exrmhgnp_5", "v2exrmhgnp_6", "v2exrmhgnp_7",
@@ -81,9 +83,8 @@ if (requireNamespace("vdemdata", quietly = TRUE)) {
                 "v2exctlhg_4", "v2exctlhg_5", "v2exctlhg_6", "v2exctlhg_7",
                 "v2exctlhg_8",
                 # Economic & social (e_ variables) -- names vary by vdemdata version
-                # v12+: egdppc, epop  |  older: e_migdppc, e_mipopula
-                "egdppc", "epop",                         # v12+ names
-                "e_migdppc", "e_mipopula",                # older names (any_of handles both)
+                "egdppc", "epop", # v12+ names
+                "e_migdppc", "e_mipopula", # older names (any_of handles both)
                 "e_cow_exports", "e_cow_imports",
                 "e_total_fuel_income_pc", "e_total_oil_income_pc",
                 "e_miurbani", "e_civil_war", "e_miinteco",
@@ -103,12 +104,13 @@ if (requireNamespace("vdemdata", quietly = TRUE)) {
                 vdem_data <- vdem_data |> rename(epop = e_mipopula)
         }
         
-        message(sprintf("[04] V-Dem: %d country-year rows, %d columns",
+        message(sprintf("[04] V-Dem: %d country-year rows, %d columns (now including v2regoppgroupssize)",
                         nrow(vdem_data), ncol(vdem_data)))
 } else {
         warning("[04] vdemdata package not installed. V-Dem variables will be absent.")
         vdem_data <- NULL
 }
+
 
 # -----------------------------------------------------------------------------
 # 2. CINC (National Material Capabilities)
@@ -533,16 +535,57 @@ message(sprintf(
 capdist <- data.table::fread(here("source_data", "gleditsch", "capdist.csv"))
 names(capdist) <- tolower(names(capdist))
 # GW codes -> COW codes
-capdist$COWcode_a <- countrycode::countrycode(capdist$numa, "gwn", "cown")
-capdist$COWcode_b <- countrycode::countrycode(capdist$numb, "gwn", "cown")
+
+# Define this once near the top of your script (or in a helpers file)
+gw_to_cow_overrides <- c(
+        "54"  = 54L,   # usually identical
+        "55"  = 55L,
+        "56"  = 56L,
+        "57"  = 57L,
+        "58"  = 58L,
+        "60"  = 60L,
+        "221" = 221L,
+        "223" = 223L,
+        "232" = 232L,
+        "255" = 260L,  # West Germany → Germany (COW uses 260 post-unification)
+        "331" = 331L,
+        "403" = 403L,
+        "563" = 563L,
+        "564" = 564L,
+        "591" = 591L,
+        "679" = 678L,  # Yemen Arab Republic → unified Yemen
+        "711" = 711L,
+        "730" = 730L,
+        "816" = 816L,  # Modern Vietnam (SRV); countrycode often defaults to 817 = old South Vietnam
+        "935" = 935L,
+        "983" = 983L,
+        "986" = 986L,
+        "987" = 987L,
+        "990" = 990L
+)
+
+# Then replace your two countrycode lines with these:
+capdist$COWcode_a <- countrycode::countrycode(
+        capdist$numa, 
+        origin      = "gwn", 
+        destination = "cown",
+        custom_match = gw_to_cow_overrides
+)
+
+capdist$COWcode_b <- countrycode::countrycode(
+        capdist$numb, 
+        origin      = "gwn", 
+        destination = "cown",
+        custom_match = gw_to_cow_overrides
+)
+
 capdist <- capdist |>
         filter(!is.na(COWcode_a), !is.na(COWcode_b)) |>
         select(COWcode_a, COWcode_b, capital_dist_km = kmdist) |>
         distinct(COWcode_a, COWcode_b, .keep_all = TRUE)
 # Left-join onto spine (no year needed — distance is static)
-spine <- spine |>
+spine_controls <- spine_controls |>
         left_join(capdist, by = c("COWcode_a", "COWcode_b"))
-
 
 
 # -----------------------------------------------------------------------------
