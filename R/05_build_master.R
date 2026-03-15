@@ -33,6 +33,14 @@ message("  Loaded: spine_conflict (", nrow(spine_conflict), " rows)")
 message("  Loaded: spine_ideology (", nrow(spine_ideology), " rows)")
 message("  Loaded: spine_controls (", nrow(spine_controls), " rows)")
 
+# ----------------------------------------------------------------------------
+# Quick NAG preservation check (added for this run)
+# ----------------------------------------------------------------------------
+message("[05] Checking NAG columns survived from 04...")
+nags_cols <- names(spine_controls)[grepl("^nags_", names(spine_controls))]
+print(paste("NAG columns found:", length(nags_cols)))
+if (length(nags_cols) > 0) print(nags_cols)
+
 # Load new intermediates (optional -- pipeline works without them)
 spine_nonstate <- NULL
 spine_nags     <- NULL

@@ -1,26 +1,21 @@
 # =============================================================================
 # 04_build_controls.R
-# Merge control variables from multiple sources onto the ideology spine
-#
-# Input:  data/spine_ideology.rds          (from 03_build_grave_d_ideology.R)
-#         source_data/atop/                (ATOP alliance data)
-#         source_data/controls/cinc/       (CINC / National Material Capabilities)
-#         source_data/cow/WRP_national.csv (COW World Religions)
-#         source_data/mids/                (First Use of Violent Force - FUVF)
-#         source_data/econ/ross_oil_gas/   (Ross oil and gas)
-#         source_data/econ/maddison/       (Maddison GDP data)
-#         source_data/econ/swiid/          (SWIID inequality)
-#         source_data/econ/fraser_institute/ (black market exchange rates)
-#         source_data/econ/relational_export_dataset/ (trade flows)
-#         V-Dem R package                  (regime and democracy measures)
-# Output: data/spine_controls.rds
+# Merge control variables ... (unchanged header)
 # =============================================================================
 source(here::here("R", "00_packages.R"))
-
 message("[04_build_controls.R] Starting controls merge...")
 
-spine <- readRDS(here("data", "spine_ideology.rds"))
-message(sprintf("[04] Loaded spine_ideology: %d rows", nrow(spine)))
+# ----------------------------------------------------------------------------
+# 1. Load spine from 03c (NAG-enriched version)
+# ----------------------------------------------------------------------------
+spine_path <- here("data", "spine_ideology_nags.rds")
+if (!file.exists(spine_path)) {
+        stop("[04] spine_ideology_nags.rds not found.\nRun 03c_build_nags.R first.")
+}
+spine <- readRDS(spine_path) |>
+        mutate(across(c(COWcode_a, COWcode_b), as.integer))
+
+message(sprintf("[04] Loaded spine_ideology_nags.rds (with NAGs): %d rows", nrow(spine)))
 
 # -----------------------------------------------------------------------------
 # 1. V-Dem (via R package, not flat file)
