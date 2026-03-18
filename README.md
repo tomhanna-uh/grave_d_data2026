@@ -19,6 +19,7 @@ This repository contains the data assembly pipeline for the **GRAVE-D** (Grand R
 
 The dataset is a **directed dyad-year** panel covering 1946–2020. The unit of analysis is the behavior of Sender (Country A) toward Target (Country B) in a given year.
 
+Note regarding V-Dem data: V-Dem v15 as a hard requirement. Please note that v16 likely introduces breaking changes and has not been reviewed.
 ---
 
 ## Dataset Structure
