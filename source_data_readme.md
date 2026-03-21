@@ -125,6 +125,8 @@ Install with:
 \```r
 remotes::install_github("vdemdata/vdemdata")
 
+Note regarding V-Dem data: V-Dem v15 is a hard requirement. Please note that v16 likely introduces breaking changes and has not been reviewed.
+
 Notes
 The pipeline auto-detects file formats (.csv, .dta, .xlsx, .rds, .tsv)
 in most directories via list.files() with pattern matching.
