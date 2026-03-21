@@ -1,22 +1,22 @@
 # =============================================================================
 # 04_build_controls.R
-# Merge control variables ... (unchanged header)
+# Merge control variables from multiple sources onto the ideology spine
 # =============================================================================
 source(here::here("R", "00_packages.R"))
-message("[04_build_controls.R] Starting controls merge...")
+message("[04] Starting controls merge...")
 
 # ----------------------------------------------------------------------------
-# 1. Load spine from 03c (NAG-enriched version)
+# 1. Load the NEW spine that includes the triadic NAG variables
 # ----------------------------------------------------------------------------
-spine_path <- here("data", "spine_ideology_nags.rds")
+spine_path <- here("data", "spine_ideology_nags_triadic.rds")
 if (!file.exists(spine_path)) {
-        stop("[04] spine_ideology_nags.rds not found.\nRun 03c_build_nags.R first.")
+        stop("[04] spine_ideology_nags_triadic.rds not found.\nRun 03d_merge_triadic_nags.R first.")
 }
+
 spine <- readRDS(spine_path) |>
         mutate(across(c(COWcode_a, COWcode_b), as.integer))
 
-message(sprintf("[04] Loaded spine_ideology_nags.rds (with NAGs): %d rows", nrow(spine)))
-
+message(sprintf("[04] Loaded NEW spine with triadic NAG vars: %d rows", nrow(spine)))
 # -----------------------------------------------------------------------------
 # 1. V-Dem (via R package, not flat file)
 # -----------------------------------------------------------------------------
@@ -186,7 +186,7 @@ if (file.exists(wrp_path)) {
 #        create a binary indicator for merge onto dyadic spine)
 fuvf_files <- list.files(
         here("source_data", "mids"),
-        pattern = ".*FUF.*\\.csv$", full.names = TRUE, ignore.case = TRUE
+        pattern = ".*fuv.*\\.csv$", full.names = TRUE, ignore.case = TRUE
 )
 if (length(fuvf_files) > 0) {
         message(sprintf("[04] Found FUVF file: %s", fuvf_files[1]))
@@ -526,68 +526,49 @@ message(sprintf(
 # -----------------------------------------------------------------------------
 # 10. Capitals distance variable
 # -----------------------------------------------------------------------------
-
 capdist <- data.table::fread(here("source_data", "gleditsch", "capdist.csv"))
 names(capdist) <- tolower(names(capdist))
-# GW codes -> COW codes
 
-# Define this once near the top of your script (or in a helpers file)
 gw_to_cow_overrides <- c(
-        "54"  = 54L,   # usually identical
-        "55"  = 55L,
-        "56"  = 56L,
-        "57"  = 57L,
-        "58"  = 58L,
-        "60"  = 60L,
-        "221" = 221L,
-        "223" = 223L,
-        "232" = 232L,
-        "255" = 260L,  # West Germany → Germany (COW uses 260 post-unification)
-        "331" = 331L,
-        "403" = 403L,
-        "563" = 563L,
-        "564" = 564L,
-        "591" = 591L,
-        "679" = 678L,  # Yemen Arab Republic → unified Yemen
-        "711" = 711L,
-        "730" = 730L,
-        "816" = 816L,  # Modern Vietnam (SRV); countrycode often defaults to 817 = old South Vietnam
-        "935" = 935L,
-        "983" = 983L,
-        "986" = 986L,
-        "987" = 987L,
-        "990" = 990L
+        "54" = 54L, "55" = 55L, "56" = 56L, "57" = 57L, "58" = 58L, "60" = 60L,
+        "221" = 221L, "223" = 223L, "232" = 232L, "255" = 260L, "331" = 331L,
+        "403" = 403L, "563" = 563L, "564" = 564L, "591" = 591L, "679" = 678L,
+        "711" = 711L, "730" = 730L, "816" = 816L, "935" = 935L, "983" = 983L,
+        "986" = 986L, "987" = 987L, "990" = 990L
 )
 
-# Then replace your two countrycode lines with these:
 capdist$COWcode_a <- countrycode::countrycode(
-        capdist$numa, 
-        origin      = "gwn", 
-        destination = "cown",
-        custom_match = gw_to_cow_overrides
+        capdist$numa, "gwn", "cown", custom_match = gw_to_cow_overrides
 )
-
 capdist$COWcode_b <- countrycode::countrycode(
-        capdist$numb, 
-        origin      = "gwn", 
-        destination = "cown",
-        custom_match = gw_to_cow_overrides
+        capdist$numb, "gwn", "cown", custom_match = gw_to_cow_overrides
 )
 
 capdist <- capdist |>
         filter(!is.na(COWcode_a), !is.na(COWcode_b)) |>
         select(COWcode_a, COWcode_b, capital_dist_km = kmdist) |>
         distinct(COWcode_a, COWcode_b, .keep_all = TRUE)
-# Left-join onto spine (no year needed — distance is static)
+
+
+
+
 spine_controls <- spine_controls |>
         left_join(capdist, by = c("COWcode_a", "COWcode_b"))
 
 
 # -----------------------------------------------------------------------------
-# 11. Save
+# 10b. Clean up duplicated Target/Supporter columns
+# Keep .x (from spine) as authoritative, drop .y
 # -----------------------------------------------------------------------------
+spine_controls <- spine_controls |>
+        rename(
+                Target    = Target.x,
+                Supporter = Supporter.x
+        ) |>
+        select(-any_of(c("Target.y", "Supporter.y")))
+
+# 11. Save
 saveRDS(spine_controls, here("data", "spine_controls.rds"))
 message("[04_build_controls.R] Saved: data/spine_controls.rds")
 message("[04_build_controls.R] Done.")
 
-                                 
