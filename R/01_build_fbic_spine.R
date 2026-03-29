@@ -29,18 +29,65 @@ message("[01_build_fbic_spine.R] Starting FBIC spine construction...")
 fbic_path_csv <- here("source_data", "fbic", "FBIC_dyadic.csv")
 fbic_path_dta <- here("source_data", "fbic", "FBIC_dyadic.dta")
 
+# Select the existing file
 if (file.exists(fbic_path_csv)) {
-  message("[01] Reading FBIC from CSV...")
-  fbic_raw <- as_tibble(data.table::fread(file = fbic_path_csv))
+  fbic_path <- fbic_path_csv
+  fbic_type <- "csv"
 } else if (file.exists(fbic_path_dta)) {
-  message("[01] Reading FBIC from Stata .dta...")
-  fbic_raw <- haven::read_dta(fbic_path_dta)
+  fbic_path <- fbic_path_dta
+  fbic_type <- "dta"
 } else {
   stop(
     "[01_build_fbic_spine.R] FBIC source file not found.\n",
     "  Place FBIC_dyadic.csv or FBIC_dyadic.dta in: source_data/fbic/\n",
     "  Download from: https://fbicproject.com/"
   )
+}
+
+# -----------------------------------------------------------------------------
+# Security: Verify Data Integrity (Checksum)
+# -----------------------------------------------------------------------------
+# Define expected MD5 hashes for verified FBIC releases.
+# Update these hashes when upgrading to a new data version.
+expected_hashes <- list(
+  # Example: "csv" = "d41d8cd98f00b204e9800998ecf8427e"
+  "csv" = "",  # Placeholder - replace with actual hash of FBIC_dyadic.csv
+  "dta" = ""   # Placeholder - replace with actual hash of FBIC_dyadic.dta
+)
+
+message(sprintf("[01] Verifying integrity of: %s", basename(fbic_path)))
+actual_hash <- tools::md5sum(fbic_path)
+names(actual_hash) <- NULL # Remove filename attribute
+
+expected_hash <- expected_hashes[[fbic_type]]
+
+if (!is.null(expected_hash) && expected_hash != "") {
+  # Enforce strict verification if a hash is defined
+  if (actual_hash != expected_hash) {
+    stop(sprintf(
+      "SECURITY ERROR: FBIC file checksum mismatch!\n  File: %s\n  Expected: %s\n  Actual:   %s\n  The file may be corrupted or modified. Verify the source.",
+      fbic_path, expected_hash, actual_hash
+    ))
+  } else {
+    message("[01] Checksum verification PASSED.")
+  }
+} else {
+  # Warn if no hash is configured (first run or update needed)
+  warning(sprintf(
+    "SECURITY WARNING: No checksum configured for this FBIC file type.\n  File: %s\n  Calculated Hash: %s\n  Update 'expected_hashes' in R/01_build_fbic_spine.R to enforce integrity.",
+    basename(fbic_path), actual_hash
+  ))
+}
+
+# -----------------------------------------------------------------------------
+# Read Data
+# -----------------------------------------------------------------------------
+if (fbic_type == "csv") {
+  message("[01] Reading FBIC from CSV...")
+  fbic_raw <- as_tibble(data.table::fread(file = fbic_path))
+} else {
+  message("[01] Reading FBIC from Stata .dta...")
+  fbic_raw <- haven::read_dta(fbic_path)
 }
 
 message(sprintf("[01] FBIC raw: %d rows x %d cols", nrow(fbic_raw), ncol(fbic_raw)))
