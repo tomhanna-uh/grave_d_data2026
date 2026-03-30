@@ -134,7 +134,7 @@ grave_d_data2026/
 │   ├── 02_build_conflict.R           # Merge MIDs v4.0 conflict outcomes
 │   ├── 03_build_grave_d_ideology.R   # Merge GRAVE-D ideology & support group vars
 │   ├── 04_build_controls.R           # Merge V-Dem, COW CINC, WDI controls
-│   ├── 05_merge_master.R             # Assemble GRAVE_D_Master_with_Leaders.csv
+│   ├── 05_build_master.R             # Assemble GRAVE_D_Master_with_Leaders.csv
 │   └── 06_validate_export.R          # Validation checks and CSV export
 ├── source_data/                       # gitignored — place raw source files here
 │   ├── fbic/                         # FBIC dataset files
@@ -222,7 +222,7 @@ source("R/03_build_grave_d_ideology.R")
 source("R/04_build_controls.R")
 
 # Step 6: Assemble master dataset
-source("R/05_merge_master.R")
+source("R/05_build_master.R")
 
 # Step 7: Validate and export
 source("R/06_validate_export.R")
