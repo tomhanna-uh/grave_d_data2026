@@ -24,6 +24,7 @@
 # GRAVE_D_Master.rds object.
 # =============================================================================
 source(here::here("R", "00_packages.R"))
+source(here::here("R", "utils_colgan.R"))
 
 message("[06_impute_controls.R] Starting targeted imputation...")
 
@@ -429,29 +430,9 @@ if (length(archigos_path) > 0) {
 }
 
 # --- Colgan Side B ---
-colgan_files <- list.files(
-        here("source_data", "colgan"),
-        pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
-)
+colgan <- load_colgan_data(apply_renames = TRUE)
 
-if (length(colgan_files) > 0) {
-        if (grepl("\\.csv$", colgan_files[1])) {
-                colgan <- as_tibble(data.table::fread(colgan_files[1]))
-        } else {
-                colgan <- haven::read_dta(colgan_files[1])
-        }
-        colgan <- colgan |> rename_with(tolower)
-        if ("ccode" %in% names(colgan)) colgan <- colgan |> rename(COWcode = ccode)
-        
-        colgan_renames <- c(
-                obsid_colgan = "obsid", leader_colgan = "leader",
-                startdate_colgan = "startdate", enddate_colgan = "enddate",
-                entry_colgan = "entry", prevtimesinoffice_colgan = "prevtimesinoffice",
-                posttenurefate_colgan = "posttenurefate", gender_colgan = "gender"
-        )
-        colgan_renames <- colgan_renames[colgan_renames %in% names(colgan)]
-        colgan <- colgan |> rename(!!!colgan_renames)
-        
+if (!is.null(colgan)) {
         colgan_b <- colgan |>
                 select(COWcode, year, any_of(c(
                         "obsid_colgan", "ccname", "leader_colgan",

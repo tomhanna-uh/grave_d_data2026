@@ -19,6 +19,8 @@
 here::i_am("R/03_build_grave_d_ideology.R")
 
 source(here::here("R", "00_packages.R"))
+source(here::here("R", "utils_colgan.R"))
+
 message("[03_build_grave_d_ideology.R] Starting leader data merge...")
 
 # ----------------------------------------------------------------------------- 
@@ -62,28 +64,10 @@ if (length(archigos_files) == 0) {
 # ----------------------------------------------------------------------------- 
 # 3. Load Colgan leader data
 # ----------------------------------------------------------------------------- 
-colgan_files <- list.files(
-        here("source_data", "colgan"),
-        pattern = ".*\\.(csv|tsv|dta|xlsx)$",
-        full.names = TRUE,
-        ignore.case = TRUE
-)
-
-if (length(colgan_files) == 0) {
+colgan_raw <- load_colgan_data(apply_renames = FALSE)
+if (is.null(colgan_raw)) {
         warning("[03] No Colgan files found in source_data/colgan/.")
-        colgan_raw <- NULL
 } else {
-        message(sprintf("[03] Found Colgan file: %s", colgan_files[1]))
-        if (grepl("\\.csv$", colgan_files[1], ignore.case = TRUE)) {
-                colgan_raw <- as_tibble(data.table::fread(file = colgan_files[1]))
-        } else if (grepl("\\.tsv$", colgan_files[1], ignore.case = TRUE)) {
-                colgan_raw <- read_tsv(colgan_files[1], show_col_types = FALSE)
-        } else if (grepl("\\.dta$", colgan_files[1], ignore.case = TRUE)) {
-                colgan_raw <- haven::read_dta(colgan_files[1])
-        } else {
-                colgan_raw <- readxl::read_excel(colgan_files[1])
-        }
-        colgan_raw <- colgan_raw |> rename_with(tolower)
         message(sprintf("[03] Colgan raw: %d rows x %d cols", nrow(colgan_raw), ncol(colgan_raw)))
 }
 
@@ -132,7 +116,7 @@ standardize_cowcode <- function(df) {
 }
 
 archigos_raw <- standardize_cowcode(archigos_raw)
-colgan_raw   <- standardize_cowcode(colgan_raw)
+# standardize_cowcode is already handled for Colgan inside load_colgan_data
 ideology_raw <- standardize_cowcode(ideology_raw)
 
 # ----------------------------------------------------------------------------- 
