@@ -141,16 +141,20 @@ core_spine_vars <- c(
         "Target", "Supporter"  # include the two we already fixed conceptually
 )
 
+# Resolve duplicates dynamically: coalesce .x, .y, and the base variable
 for (v in core_spine_vars) {
         vx <- paste0(v, ".x")
         vy <- paste0(v, ".y")
         
-        # If .x exists, make it the canonical version
-        if (vx %in% names(grave_d)) {
-                grave_d[[v]] <- grave_d[[vx]]
-        } else if (!(v %in% names(grave_d)) && vy %in% names(grave_d)) {
-                # Fallback: if only .y exists and base v is missing, use .y
-                grave_d[[v]] <- grave_d[[vy]]
+        # Extract existing columns into a list, excluding missing ones
+        cols <- list()
+        if (vx %in% names(grave_d)) cols[[1]] <- grave_d[[vx]]
+        if (vy %in% names(grave_d)) cols[[length(cols) + 1]] <- grave_d[[vy]]
+        if (v %in% names(grave_d))  cols[[length(cols) + 1]] <- grave_d[[v]]
+
+        # If any duplicates existed, use do.call to pass the valid list to coalesce
+        if (length(cols) > 0) {
+                grave_d[[v]] <- do.call(dplyr::coalesce, cols)
         }
 }
 
