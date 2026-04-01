@@ -184,9 +184,7 @@ spine_ns <- spine_ns |>
 # -----------------------------------------------------------------------------
 ns_cols <- grep("^nonstate_", names(spine_ns), value = TRUE)
 
-for (col in ns_cols) {
-  spine_ns[[col]] <- if_else(is.na(spine_ns[[col]]), 0L, as.integer(spine_ns[[col]]))
-}
+spine_ns <- spine_ns |> mutate(across(all_of(ns_cols), ~ if_else(is.na(.), 0L, as.integer(.))))
 
 message(sprintf(
   "[02b] After merge: %d rows | %d dyad-years with nonstate conflict (A) | %d (B)",
