@@ -134,31 +134,31 @@ impute_country_panel <- function(df, vars, cow_col) {
         # df must have columns: cow_col, year, and all vars
         df <- df |> arrange(!!sym(cow_col), year)
         
-        for (v in vars) {
-                if (!v %in% names(df)) next
-                if (all(is.na(df[[v]]))) next
+        valid_vars <- intersect(vars, names(df))
+        if (length(valid_vars) == 0) return(df)
+
+        vars_to_impute <- valid_vars[purrr::map_lgl(df[valid_vars], ~ !all(is.na(.x)))]
+        if (length(vars_to_impute) == 0) return(df)
+
+        df <- df |>
+                group_by(!!sym(cow_col)) |>
+                mutate(across(all_of(vars_to_impute), ~ {
+                        vals <- .x
+                        yrs  <- year
+                        observed <- !is.na(vals)
+                        n_obs <- sum(observed)
+                        if (n_obs >= 2) {
+                                # Linear interpolation + extrapolation at edges (rule = 2)
+                                approx(yrs[observed], vals[observed], xout = yrs, rule = 2)$y
+                        } else if (n_obs == 1) {
+                                # Single observation: carry to all years for this country
+                                replace(vals, TRUE, vals[observed][1])
+                        } else {
+                                vals
+                        }
+                })) |>
+                ungroup()
                 
-                df <- df |>
-                        group_by(!!sym(cow_col)) |>
-                        mutate(
-                                !!v := {
-                                        vals <- .data[[v]]
-                                        yrs  <- year
-                                        observed <- !is.na(vals)
-                                        n_obs <- sum(observed)
-                                        if (n_obs >= 2) {
-                                                # Linear interpolation + extrapolation at edges (rule = 2)
-                                                approx(yrs[observed], vals[observed], xout = yrs, rule = 2)$y
-                                        } else if (n_obs == 1) {
-                                                # Single observation: carry to all years for this country
-                                                replace(vals, TRUE, vals[observed][1])
-                                        } else {
-                                                vals
-                                        }
-                                }
-                        ) |>
-                        ungroup()
-        }
         df
 }
 
