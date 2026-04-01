@@ -141,17 +141,31 @@ core_spine_vars <- c(
         "Target", "Supporter"  # include the two we already fixed conceptually
 )
 
-for (v in core_spine_vars) {
-        vx <- paste0(v, ".x")
-        vy <- paste0(v, ".y")
-        
-        # If .x exists, make it the canonical version
-        if (vx %in% names(grave_d)) {
-                grave_d[[v]] <- grave_d[[vx]]
-        } else if (!(v %in% names(grave_d)) && vy %in% names(grave_d)) {
-                # Fallback: if only .y exists and base v is missing, use .y
-                grave_d[[v]] <- grave_d[[vy]]
-        }
+# Pre-calculate column names and existence for vectorized assignment
+grave_d_names <- names(grave_d)
+vx_names <- paste0(core_spine_vars, ".x")
+vy_names <- paste0(core_spine_vars, ".y")
+
+has_vx <- vx_names %in% grave_d_names
+has_vy <- vy_names %in% grave_d_names
+has_base <- core_spine_vars %in% grave_d_names
+
+# 1. Assign from .x where .x exists
+if (any(has_vx)) {
+        cols_to_assign <- core_spine_vars[has_vx]
+        src_cols <- vx_names[has_vx]
+        grave_d[cols_to_assign] <- grave_d[src_cols]
+}
+
+# 2. Fallback to .y where:
+#    - base v did not exist initially
+#    - vx did not exist
+#    - vy does exist
+needs_vy <- !has_base & !has_vx & has_vy
+if (any(needs_vy)) {
+        cols_to_assign_y <- core_spine_vars[needs_vy]
+        src_cols_y <- vy_names[needs_vy]
+        grave_d[cols_to_assign_y] <- grave_d[src_cols_y]
 }
 
 # Drop all leftover .x/.y columns
