@@ -29,10 +29,43 @@ message("[01_build_fbic_spine.R] Starting FBIC spine construction...")
 fbic_path_csv <- here("source_data", "fbic", "FBIC_dyadic.csv")
 fbic_path_dta <- here("source_data", "fbic", "FBIC_dyadic.dta")
 
+# Expected MD5 hashes to ensure data integrity
+# Configured via environment variables for security and flexibility
+expected_fbic_csv_md5 <- Sys.getenv("FBIC_CSV_MD5", unset = "")
+expected_fbic_dta_md5 <- Sys.getenv("FBIC_DTA_MD5", unset = "")
+
 if (file.exists(fbic_path_csv)) {
+  if (nzchar(expected_fbic_csv_md5)) {
+    message("[01] Verifying FBIC CSV checksum...")
+    actual_md5 <- unname(tools::md5sum(fbic_path_csv))
+    if (actual_md5 != expected_fbic_csv_md5) {
+      stop(
+        "[01_build_fbic_spine.R] SECURITY ERROR: FBIC CSV checksum mismatch.\n",
+        "  Expected: ", expected_fbic_csv_md5, "\n",
+        "  Actual:   ", actual_md5, "\n",
+        "  File may be corrupted or tampered with."
+      )
+    }
+  } else {
+    message("[01] WARNING: FBIC CSV checksum validation skipped (no expected hash configured).")
+  }
   message("[01] Reading FBIC from CSV...")
   fbic_raw <- as_tibble(data.table::fread(file = fbic_path_csv))
 } else if (file.exists(fbic_path_dta)) {
+  if (nzchar(expected_fbic_dta_md5)) {
+    message("[01] Verifying FBIC DTA checksum...")
+    actual_md5 <- unname(tools::md5sum(fbic_path_dta))
+    if (actual_md5 != expected_fbic_dta_md5) {
+      stop(
+        "[01_build_fbic_spine.R] SECURITY ERROR: FBIC DTA checksum mismatch.\n",
+        "  Expected: ", expected_fbic_dta_md5, "\n",
+        "  Actual:   ", actual_md5, "\n",
+        "  File may be corrupted or tampered with."
+      )
+    }
+  } else {
+    message("[01] WARNING: FBIC DTA checksum validation skipped (no expected hash configured).")
+  }
   message("[01] Reading FBIC from Stata .dta...")
   fbic_raw <- haven::read_dta(fbic_path_dta)
 } else {
