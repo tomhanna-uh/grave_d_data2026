@@ -445,21 +445,103 @@ if (!is.null(fuvf_data)) {
         message("[04] Merged FUVF (Side A).")
 }
 
-# 7f-7j. Remaining economic datasets (TODO: select specific variables)
+# 7f-7j. Remaining economic datasets
 if (!is.null(ross_data)) {
-        message("[04] Ross loaded. Select specific variables and merge as needed.")
+        ross_clean <- ross_data |>
+                mutate(is_petro_state = if_else(oil_income_pc >= 100, 1L, 0L)) |>
+                select(COWcode, year, oil_income_pc, is_petro_state) |>
+                distinct(COWcode, year, .keep_all = TRUE)
+
+        spine_controls <- spine_controls |>
+                left_join(
+                        ross_clean |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_a" = "COWcode", "year")
+                ) |>
+                left_join(
+                        ross_clean |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_b" = "COWcode", "year")
+                )
+        message("[04] Merged Ross oil and gas (both sides).")
 }
+
 if (!is.null(maddison_data)) {
-        message("[04] Maddison loaded. Select specific variables and merge as needed.")
+        gdp_candidates <- intersect(c("rgdpnapc", "gdppc"), names(maddison_data))
+        maddison_clean <- maddison_data |>
+                mutate(maddison_gdp_pc = coalesce(!!!syms(gdp_candidates))) |>
+                select(COWcode, year, maddison_gdp_pc) |>
+                distinct(COWcode, year, .keep_all = TRUE)
+
+        spine_controls <- spine_controls |>
+                left_join(
+                        maddison_clean |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_a" = "COWcode", "year")
+                ) |>
+                left_join(
+                        maddison_clean |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_b" = "COWcode", "year")
+                )
+        message("[04] Merged Maddison GDP (both sides).")
 }
+
 if (!is.null(swiid_data)) {
-        message("[04] SWIID loaded. Select specific variables and merge as needed.")
+        swiid_clean <- swiid_data |>
+                select(COWcode, year, gini_disp) |>
+                distinct(COWcode, year, .keep_all = TRUE)
+
+        spine_controls <- spine_controls |>
+                left_join(
+                        swiid_clean |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_a" = "COWcode", "year")
+                ) |>
+                left_join(
+                        swiid_clean |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_b" = "COWcode", "year")
+                )
+        message("[04] Merged SWIID inequality (both sides).")
 }
+
 if (!is.null(fraser_data)) {
-        message("[04] Fraser loaded. Select specific variables and merge as needed.")
+        fraser_clean <- fraser_data |>
+                select(COWcode, year, bmr) |>
+                distinct(COWcode, year, .keep_all = TRUE)
+
+        spine_controls <- spine_controls |>
+                left_join(
+                        fraser_clean |> rename_with(~ paste0(., "_a"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_a" = "COWcode", "year")
+                ) |>
+                left_join(
+                        fraser_clean |> rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)),
+                        by = c("COWcode_b" = "COWcode", "year")
+                )
+        message("[04] Merged Fraser black market exchange rates (both sides).")
 }
+
 if (!is.null(export_data)) {
-        message("[04] Export data loaded. Merge on dyadic keys as needed.")
+        if ("ccode1" %in% names(export_data) && "ccode2" %in% names(export_data)) {
+                export_clean <- export_data |>
+                        rename(COWcode_a = ccode1, COWcode_b = ccode2)
+        } else if ("cowcode1" %in% names(export_data) && "cowcode2" %in% names(export_data)) {
+                export_clean <- export_data |>
+                        rename(COWcode_a = cowcode1, COWcode_b = cowcode2)
+        } else if ("cowcode_a" %in% names(export_data) && "cowcode_b" %in% names(export_data)) {
+                export_clean <- export_data |>
+                        rename(COWcode_a = cowcode_a, COWcode_b = cowcode_b)
+        } else {
+                export_clean <- export_data
+        }
+
+        if (all(c("COWcode_a", "COWcode_b", "year", "exp_total") %in% names(export_clean))) {
+                export_merge <- export_clean |>
+                        select(COWcode_a, COWcode_b, year, exp_total) |>
+                        distinct(COWcode_a, COWcode_b, year, .keep_all = TRUE)
+
+                spine_controls <- spine_controls |>
+                        left_join(export_merge, by = c("COWcode_a", "COWcode_b", "year"))
+                message("[04] Merged Export data (dyadic).")
+        } else {
+                message("[04] Export data loaded but required columns (COWcode_a, COWcode_b, year, exp_total) not found. Skipping merge.")
+        }
 }
 
 # -----------------------------------------------------------------------------
