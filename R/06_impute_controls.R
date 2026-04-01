@@ -24,6 +24,7 @@
 # GRAVE_D_Master.rds object.
 # =============================================================================
 source(here::here("R", "00_packages.R"))
+source(here::here("R", "utils_leaders.R"))
 
 message("[06_impute_controls.R] Starting targeted imputation...")
 
@@ -384,64 +385,38 @@ message("[06] Re-exporting GRAVE_D_Master_with_Leaders.csv from imputed data..."
 grave_d_leaders <- grave_d
 
 # --- Archigos Side B ---
-archigos_path <- list.files(
-        here("source_data", "archigos"),
-        pattern = "archigos\\.tsv$", full.names = TRUE, ignore.case = TRUE
-)
+archigos <- load_leader_data(here("source_data", "archigos"), "archigos\\.tsv$", "Archigos Side B")
 
-if (length(archigos_path) > 0) {
-        archigos <- as_tibble(data.table::fread(archigos_path[1])) |>
-                rename_with(tolower)
-        if ("ccode"   %in% names(archigos)) archigos <- archigos |> rename(COWcode = ccode)
-        if ("cowcode" %in% names(archigos)) archigos <- archigos |> rename(COWcode = cowcode)
+if (!is.null(archigos)) {
+        archigos <- standardize_cowcode(archigos)
+        archigos_cy <- expand_archigos_to_cy(archigos)
         
-        archigos <- archigos |>
-                mutate(
-                        start_yr = as.integer(format(as.Date(startdate), "%Y")),
-                        end_yr   = as.integer(format(as.Date(enddate), "%Y"))
-                ) |>
-                filter(!is.na(start_yr), !is.na(end_yr))
-        
-        archigos_cy <- archigos |>
-                rowwise() |>
-                mutate(year = list(seq(start_yr, end_yr))) |>
-                ungroup() |>
-                tidyr::unnest(year) |>
-                select(-start_yr, -end_yr)
-        
-        archigos_b <- archigos_cy |>
-                select(COWcode, year, any_of(c(
-                        "obsid", "leadid", "idacr", "leader",
-                        "startdate", "enddate", "entry", "exit", "exitcode",
-                        "prevtimesinoffice", "posttenurefate", "gender",
-                        "yrborn", "yrdied", "borndate", "deathdate", "dbpedia.uri",
-                        "num.entry", "num.exit", "num.exitcode", "num.posttenurefate"
-                ))) |>
-                rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)) |>
-                distinct(COWcode, year, .keep_all = TRUE)
-        
-        grave_d_leaders <- grave_d_leaders |>
-                left_join(archigos_b, by = c("COWcode_b" = "COWcode", "year"))
-        
-        message(sprintf("  Added %d Archigos Side B columns.", ncol(archigos_b) - 2))
+        if (!is.null(archigos_cy)) {
+                archigos_b <- archigos_cy |>
+                        select(COWcode, year, any_of(c(
+                                "obsid", "leadid", "idacr", "leader",
+                                "startdate", "enddate", "entry", "exit", "exitcode",
+                                "prevtimesinoffice", "posttenurefate", "gender",
+                                "yrborn", "yrdied", "borndate", "deathdate", "dbpedia.uri",
+                                "num.entry", "num.exit", "num.exitcode", "num.posttenurefate"
+                        ))) |>
+                        rename_with(~ paste0(., "_b"), .cols = -c(COWcode, year)) |>
+                        distinct(COWcode, year, .keep_all = TRUE)
+
+                grave_d_leaders <- grave_d_leaders |>
+                        left_join(archigos_b, by = c("COWcode_b" = "COWcode", "year"))
+
+                message(sprintf("  Added %d Archigos Side B columns.", ncol(archigos_b) - 2))
+        }
 } else {
         message("  Archigos file not found; skipping Side B Archigos merge.")
 }
 
 # --- Colgan Side B ---
-colgan_files <- list.files(
-        here("source_data", "colgan"),
-        pattern = ".*\\.(csv|dta)$", full.names = TRUE, ignore.case = TRUE
-)
+colgan <- load_leader_data(here("source_data", "colgan"), ".*\\.(csv|dta)$", "Colgan Side B")
 
-if (length(colgan_files) > 0) {
-        if (grepl("\\.csv$", colgan_files[1])) {
-                colgan <- as_tibble(data.table::fread(colgan_files[1]))
-        } else {
-                colgan <- haven::read_dta(colgan_files[1])
-        }
-        colgan <- colgan |> rename_with(tolower)
-        if ("ccode" %in% names(colgan)) colgan <- colgan |> rename(COWcode = ccode)
+if (!is.null(colgan)) {
+        colgan <- standardize_cowcode(colgan)
         
         colgan_renames <- c(
                 obsid_colgan = "obsid", leader_colgan = "leader",
